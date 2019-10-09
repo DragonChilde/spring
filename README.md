@@ -139,7 +139,6 @@ IOC 描述的是一种思想，而DI 是对IOC思想的具体实现.
 ![](https://images2018.cnblogs.com/blog/1362278/201807/1362278-20180709153041698-778938050.png)
 
 -  **ApplicationContext的主要实现类**
-
 	1. ClassPathXmlApplicationContext：对应类路径下的XML格式的配置文件
 	2. FileSystemXmlApplicationContext：对应文件系统中的XML格式的配置文件
 	3. 在初始化时就创建单例的bean，也可以通过配置的方式指定创建的Bean是多实例的。
