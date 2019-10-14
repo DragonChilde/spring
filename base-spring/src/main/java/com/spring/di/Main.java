@@ -1,8 +1,6 @@
 package com.spring.di;
 
-import com.spring.di.bean.Book;
-import com.spring.di.bean.Car;
-import com.spring.di.bean.Person;
+import com.spring.di.bean.*;
 import org.springframework.context.support.ClassPathXmlApplicationContext;
 
 import java.lang.reflect.Constructor;
@@ -21,7 +19,9 @@ public class Main {
         //test5();
         //tet6();
         //test7();
-        test8();
+        //test8();
+        test9();
+        //test10();
     }
 
     private static void test1()
@@ -86,5 +86,19 @@ public class Main {
         ClassPathXmlApplicationContext classPathXmlApplicationContext = new ClassPathXmlApplicationContext("spring-di.xml");
         Person person = classPathXmlApplicationContext.getBean("person2", Person.class);
         System.out.println(person);
+    }
+
+    private static void test9()
+    {
+        ClassPathXmlApplicationContext classPathXmlApplicationContext = new ClassPathXmlApplicationContext("spring-di.xml");
+        PersonList personlist = classPathXmlApplicationContext.getBean("personlist", PersonList.class);
+        System.out.println(personlist);
+    }
+
+    private static void test10()
+    {
+        ClassPathXmlApplicationContext classPathXmlApplicationContext = new ClassPathXmlApplicationContext("spring-di.xml");
+        PersonMap personmap = classPathXmlApplicationContext.getBean("personmap", PersonMap.class);
+        System.out.println(personmap);
     }
 }

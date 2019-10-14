@@ -12,6 +12,7 @@ public class Car {
     private Integer speed ;  // 速度
 
     public Car() {
+        System.out.println("this is invoke method");
     }
 
     public Car(String brand, String crop, Double price) {

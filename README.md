@@ -375,3 +375,356 @@ applicationContext.xml
            </bean>
         </property>
     </bean>
+
+**集合属性**
+
+在Spring中可以通过一组内置的XML标签来配置集合属性
+
+	例如：<list>，<set>或<map>。
+
+**1. 数组和List**
+
+	配置java.util.List类型的属性，需要指定<list>标签，在标签里包含一些元素。这些标签	可以通过<value>指定简单的常量值，通过<ref>指定对其他Bean的引用。通过<bean>	指定内置bean定义。通过<null/>指定空元素。甚至可以内嵌其他集合。
+	数组的定义和List一样，都使用<list>元素。
+	配置java.util.Set需要使用<set>标签，定义的方法与List一样。
+
+    <!-- List集合 -->
+	<!--List集合和Array数组的使用一样，因为集合的底层使用的就是数组,所以如果是数组类型,建议也是使用<list>标签,<set>标签与<list>标签定义一样-->
+    <bean id="personlist" class="com.spring.di.bean.PersonList">
+        <property name="name" value="宇田老师"/>
+        <property name="cars">
+            <list>
+                <ref bean="car"/>
+                <ref bean="car2"/>
+                <ref bean="car3"/>
+            </list>
+			<!-- <array></array>-->
+			 <!--<set></set>-->
+        </property>
+    </bean>
+
+	/**注意这里car引用bean时speed明明没有定义，为何会打印有值，因为在级联属性赋值,已经通过指定car的speed赋值了,对于底层原理，两个引用指向同一个对象**/
+	/**PersonList{name='宇田老师', cars=[Car{brand='丰田', crop='广汽', price=200000.0, speed=100}, Car{brand='宝马', crop='华晨', price=null, speed=450000}, Car{brand='本田', crop='东本', price=200000.0, speed=200}]}**/
+
+**2. Map**
+
+	Java.util.Map通过<map>标签定义，<map>标签里可以使用多个<entry>作为子标签。每个条目包含一个键和一个值。
+	必须在<key>标签里定义键。
+	因为键和值的类型没有限制，所以可以自由地为它们指定<value>、<ref>、<bean>或<null/>元素。
+	可以将Map的键和值作为<entry>的属性定义：简单常量使用key和value来定义；bean引用通过key-ref和value-ref属性定义。
+
+	  <!-- Map集合 -->
+    <bean id="personmap" class="com.spring.di.bean.PersonMap">
+        <property name="name" value="藤井老师"/>
+        <property name="cars">
+            <map>
+                <entry key="aaa" value-ref="car"/>
+                <entry key="bbb" value-ref="car2" />
+                <entry key="ccc" value-ref="car3"/>
+            </map>
+        </property>
+    </bean>
+
+**3. 集合类型的bean**
+
+如果只能将集合对象配置在某个bean内部，则这个集合的配置将不能重用。我们需要将集合bean的配置拿到外面，供其他bean引用。
+
+配置集合类型的bean需要引入util名称空间
+	
+	<!--需要加入util命名空间-->
+	xmlns:util="http://www.springframework.org/schema/util"
+	xsi:schemaLocation="http://www.springframework.org/schema/util http://www.springframework.org/schema/util/spring-util-4.0.xsd"
+
+	  <!-- 集合Bean，通过这种定义，可以多个引用同一个集合bean，就不需每次都重新定义,因为在bean里定义的集合bean是无法多个引用的-->
+	<!--也可以在里面定义一个bean-->
+    <util:list id="carlist">
+        <ref bean="car"/>
+        <ref bean="car2"/>
+        <ref bean="car3"/>
+        <!--<bean></bean>-->
+    </util:list>
+
+
+**FactoryBean**
+
+Spring中有两种类型的bean，一种是普通bean，另一种是工厂bean，即FactoryBean。
+
+工厂bean跟普通bean不同，其返回的对象不是指定类的一个实例，其返回的是该工厂bean的getObject方法所返回的对象。
+
+工厂bean必须实现org.springframework.beans.factory.FactoryBean接口。
+
+	<bean id="car" class="com.spring.factorybean.bean.CarFactoryBean"/>
+
+	/**工厂bean的实际使用是在整合时通过继承已经定义好的xxxFactoryBean来使用**/
+	public class CarFactoryBean implements FactoryBean<Car> {
+	
+	    /**
+	     * 工厂bean具体创建的bean对象是由getObject方法来返回的.
+	     */
+	    public Car getObject() throws Exception {
+	        return  new Car("五菱宏光", "五菱", 50000);
+	    }
+	
+	    /**
+	     *  返回具体的bean对象的类型
+	     */
+	    public Class<?> getObjectType() {
+	        return Car.class;
+	    }
+	
+	    /**
+	     * bean 可以是单例的   也可以是原型的(非单例)： 后面讲bean的作用域再研究.
+	     */
+	    public boolean isSingleton() {
+	        return true;
+	    }
+	}
+
+**BeanFactory 和 FactoryBean的区别:**
+
+两个根本没有可比性，只是长得像而已，BeanFactory是IOC容器的顶层接口,FactoryBean是工厂方法的接口，
+
+**bean的高级配置**
+
+**1. 配置信息的继承**
+
+Spring允许继承bean的配置，被继承的bean称为父bean。继承这个父bean的bean称为子bean
+
+子bean从父bean中继承配置，包括bean的属性配置
+
+子bean也可以覆盖从父bean继承过来的配置
+
+
+	 <!--以id为address为模板，创建address2-->
+	<!--可以继续class，和其属性city,street-->
+	<!--address2.street覆盖了继承的属性-->
+	<bean id="address" class="com.spring.relation.bean.Address">
+	    <property name="city" value="广州"/>
+	    <property name="street" value="体育西路"/>
+	</bean>
+	
+	<bean id="address2" parent="address">
+	    <property name="street" value="体育东路"/>
+	</bean>
+
+**补充说明**
+
+	父bean可以作为配置模板，也可以作为bean实例。若只想把父bean作为模板，可以设置<bean>的abstract 属性为true，这样Spring将不会实例化这个bean
+	如果一个bean的class属性没有指定，则必须是抽象bean
+	并不是<bean>元素里的所有属性都会被继承。比如：autowire，abstract等。
+	也可以忽略父bean的class属性，让子bean指定自己的类，而共享相同的属性配置。但此时abstract必须设为true。
+
+
+	 <!-- bean的继承关系
+		 abstract="true": 抽象bean. 不能被创建对象. class可以省略不配置
+		 继承可以从父bean中继承一些配置， 但是 id  abstract  autowire 是不能被继承下来的.
+	 -->
+    <bean id="address" abstract="true">
+        <property name="city" value="广州"/>
+        <property name="street" value="体育西路"/>
+    </bean>
+	<bean id="address2" class="com.spring.relation.bean.Address" parent="address"/>
+
+**2. bean之间的依赖**
+
+有的时候创建一个bean的时候需要保证另外一个bean也被创建，这时我们称前面的bean对后面的bean有依赖。例如：要求创建address3对象的时候必须创建address4。	这里需要注意的是依赖关系不等于引用关系，address3即使依赖address4也可以不引用它。
+
+	<!-- 依赖关系 -->
+	<!--只有在address4存在的时候才能成功创建address3,否则会报异常-->
+	 <bean id="address3" class="com.spring.relation.bean.Address" depends-on="address4"/>
+
+    <bean id="address4" class="com.spring.relation.bean.Address"/>
+
+**bean的作用域**
+
+	在Spring中，可以在<bean>元素的scope属性里设置bean的作用域，以决定这个bean是单实例的还是多实例的。
+	
+	默认情况下，Spring只为每个在IOC容器里声明的bean创建唯一一个实例，整个IOC容器范围内都能共享该实例：所有后续的getBean()调用和bean引用都将返回这个唯一的bean实例。该作用域被称为singleton，它是所有bean的默认作用域。
+
+	singleton	\\在SpringIOC容器中仅存在一个Bean实例,Bean以单实例的方式存在
+	prototype	\\每次调用getBean()时都会返回一个新的实例
+	request		\\每次HTTP请求都会创建一个新的Bean,该作用域仅适用于WebApplicationContext环境
+	session		\\同一个HTTP Session共享一个Bean，不同的HTTP Session使用不同的Bean.该作用域仅适用于WebApplicationContext环境
+
+	 <!--
+		bean的作用域:
+			singleton: 单例的(默认值), 在整个IOC容器中只能存在一个bean的对象. 而且在IOC
+			                          容器对象被创建时，就创建单例的bean的对象. 后续每次通过getBean()方法
+			                           获取bean对象时，返回的都是同一个对象.
+			prototype: 原型的/多例的       在整个IOC容器中可有多个bean的对象。 在IOC容器对象被
+					       创建时， 不会创建原型的bean的对象。 而是等到每次通过getBean()方法获取
+					   bean对象时，才会创建一个新的bean对象返回.
+			request:   一次请求对应一个bean对象
+			session:   一次会话对应一个bean对象
+	 -->
+    <bean id="car" class="com.spring.di.bean.Car" scope="singleton">
+        <property name="brand" value="丰田"/>
+        <property name="crop" value="广汽"/>
+        <property name="price" value="200000"/>
+    </bean>
+
+
+当bean的作用域为单例时，Spring会在IOC容器对象创建时就创建bean的对象实例。而当bean的作用域为prototype时，IOC容器在获取bean的实例时创建bean的实例对象。
+
+**bean的生命周期**
+
+1. Spring IOC容器可以管理bean的生命周期，Spring允许在bean生命周期内特定的时间点执行指定的任务
+2. Spring IOC容器对bean的生命周期进行管理的过程：
+	1. 通过构造器或工厂方法创建bean实例
+	2. 为bean的属性设置值和对其他bean的引用
+	3. 调用bean的初始化方法
+	4. bean可以使用了
+	5. 当容器关闭时，调用bean的销毁方法
+
+			//spring-lifecycle.xml
+			<bean id="car" class="com.spring.lifecycle.Car" init-method="init" destroy-method="destory">
+		        <property name="brand" value="丰田"/>
+		        <property name="price" value="200000"/>
+		    </bean>
+
+			//com.spring.lifecycle.Car
+			public class Car {
+			    private String brand ;
+			
+			    private Double price ;
+			
+			    public Car() {
+			        System.out.println("===>1. 调用构造器创建bean对象 ");
+			    }
+			
+			    /**
+			     * 初始化方法
+			     * 需要通过 init-method来指定初始化方法
+			     */
+			    public void init()
+			    {
+			        System.out.println("===>3. 调用初始化方法");
+			    }
+			
+			
+			    /**
+			     * 销毁方法： IOC容器关闭， bean对象被销毁.
+			     */
+			    public void destory()
+			    {
+			        System.out.println("===>5. 调用销毁方法");
+			    }
+			
+			    public Car(String brand, Double price) {
+			        this.brand = brand;
+			        this.price = price;
+			    }
+			
+			    public String getBrand() {
+			        return brand;
+			    }
+			
+			    public void setBrand(String brand) {
+			        System.out.println("===>2. 调用set方法给对象的属性赋值");
+			        this.brand = brand;
+			    }
+			
+			    public Double getPrice() {
+			        return price;
+			    }
+			
+			    public void setPrice(Double price) {
+			        this.price = price;
+			    }
+			
+			    @Override
+			    public String toString() {
+			        return "Car{" +
+			                "brand='" + brand + '\'' +
+			                ", price=" + price +
+			                '}';
+			    }
+			}
+
+			  private static void test1()
+		    {
+				//注意:这里需要关闭容器，因此需要定义ConfigurableApplicationContext类型
+		        ConfigurableApplicationContext context = new ClassPathXmlApplicationContext("spring-lifecycle.xml");
+		        Car car = context.getBean("car", Car.class);
+		        System.out.println("===>4. 使用bean对象" + car);
+		        //关闭容器
+		        context.close();
+		    }
+			/**
+			===>1. 调用构造器创建bean对象 
+			===>2. 调用set方法给对象的属性赋值
+			===>3. 调用初始化方法
+			===>4. 使用bean对象Car{brand='丰田', price=200000.0}
+			十月 14, 2019 5:38:16 下午 org.springframework.context.support.ClassPathXmlApplicationContext doClose
+			信息: Closing org.springframework.context.support.ClassPathXmlApplicationContext@179d3b25: startup date [Mon Oct 14 17:38:15 CST 2019]; root of context hierarchy
+			===>5. 调用销毁方法
+			**/
+
+3. 在配置bean时，通过init-method和destroy-method 属性为bean指定初始化和销毁方法
+4. bean的后置处理器
+	1. bean后置处理器允许在调用**初始化方法前后**对bean进行额外的处理
+	2. bean后置处理器对IOC容器里的所有bean实例逐一处理，而非单一实例。其典型		   应用是：检查bean属性的正确性或根据特定的标准更改bean的属性。
+	3. bean后置处理器时需要实现接口：org.springframework.beans.factory.config.BeanPostProcessor。在初始化方法被调用前后，Spring将把每个bean实例分别传递给上述接口的以下两个方法：
+		1. postProcessBeforeInitialization(Object, String) 
+		2. postProcessAfterInitialization(Object, String)
+
+				<!--spring-lifecycle.xml-->
+				 <!-- 配置后置处理器 : Spring能自动识别是一个后置处理器 -->
+				<bean class="com.spring.lifecycle.bean.MyBeanPostProcessor"/>
+
+				/**
+				 * bean的后置处理器 : 对IOC容器中所有的bean都起作用.
+				 */
+				public class MyBeanPostProcessor implements BeanPostProcessor {
+				
+				    /**
+				     * 在bean的生命周期的初始化方法之前执行
+				     * Object bean: 正在被创建的bean对象.
+				     * String beanName: bena对象的id值.
+				     */
+				    public Object postProcessBeforeInitialization(Object o, String s) throws BeansException {
+				        System.out.println("postProcessBeforeInitialization");
+				        return o;
+				    }
+				
+				    /**
+				     * 在bean的生命周期的初始化方法之后执行
+				     */
+				    public Object postProcessAfterInitialization(Object o, String s) throws BeansException {
+				        System.out.println("postProcessAfterInitialization");
+				        return o;
+				    }
+				}
+
+				/**
+				===>1. 调用构造器创建bean对象 
+				===>2. 调用set方法给对象的属性赋值
+				postProcessBeforeInitialization
+				===>3. 调用初始化方法
+				postProcessAfterInitialization
+				===>4. 使用bean对象Car{brand='丰田', price=200000.0}
+				十月 14, 2019 5:57:40 下午 org.springframework.context.support.ClassPathXmlApplicationContext doClose
+				信息: Closing org.springframework.context.support.ClassPathXmlApplicationContext@179d3b25: startup date [Mon Oct 14 17:57:39 CST 2019]; root of context hierarchy
+				===>5. 调用销毁方法
+				**/
+
+5. 添加bean后置处理器后bean的生命周期
+	1. 通过构造器或工厂方法**创建bean实例**
+	2. 为bean的**属性设置值**和对其他bean的引用
+	3. 将bean实例传递给bean后置处理器的postProcessBeforeInitialization()方法
+	4. 调用bean的**初始化**方法
+	5. 将bean实例传递给bean后置处理器的postProcessAfterInitialization()方法
+	6. bean可以使用了
+	7. 当容器关闭时调用bean的**销毁方法**
+
+
+**引用外部属性文件**
+
+当bean的配置信息逐渐增多时，查找和修改一些bean的配置信息就变得愈加困难。这时可以将一部分信息提取到bean配置文件的外部，以properties格式的属性文件保存起来，同时在bean的配置文件中引用properties属性文件中的内容，从而实现一部分属性值在发生变化时仅修改properties属性文件即可。这种技术多用于连接数据库的基本信息的配置。
+
+1. 创建properties属性文件
+2. 引入context名称空间
+3. 指定properties属性文件的位置
+4. 从properties属性文件中引入属性值
+
+**自动装配**

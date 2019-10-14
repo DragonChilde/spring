@@ -10,8 +10,5 @@
         <module name="basespring" />
       </profile>
     </annotationProcessing>
-    <bytecodeTargetLevel>
-      <module name="maven-spring" target="1.8" />
-    </bytecodeTargetLevel>
   </component>
 </project>

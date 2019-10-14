@@ -2,7 +2,8 @@
 <beans xmlns="http://www.springframework.org/schema/beans"
        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
        xmlns:p="http://www.springframework.org/schema/p"
-       xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd">
+       xmlns:util="http://www.springframework.org/schema/util"
+       xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd http://www.springframework.org/schema/util http://www.springframework.org/schema/util/spring-util-4.0.xsd">
 
 
     <!-- DI依赖注入的方式: set方法注入 -->
@@ -74,4 +75,39 @@
         <property name="name" value="Julia老师"></property>
        <!-- <property name="car"><null /></property>-->
     </bean>
+
+    <!-- List集合 -->
+    <bean id="personlist" class="com.spring.di.bean.PersonList">
+        <property name="name" value="宇多老师"/>
+        <property name="cars" ref="carlist">
+           <!-- <list>
+                <ref bean="car"/>
+                <ref bean="car2"/>
+                <ref bean="car3"/>
+            </list>-->
+           <!-- <array></array>-->
+            <!--<set></set>-->
+        </property>
+    </bean>
+
+    <!-- Map集合 -->
+    <bean id="personmap" class="com.spring.di.bean.PersonMap">
+        <property name="name" value="藤井老师"/>
+        <property name="cars">
+            <map>
+                <entry key="aaa" value-ref="car"/>
+                <entry key="bbb" value-ref="car2" />
+                <entry key="ccc" value-ref="car3"/>
+            </map>
+        </property>
+    </bean>
+
+
+    <!-- 集合Bean -->
+    <util:list id="carlist">
+        <ref bean="car"/>
+        <ref bean="car2"/>
+        <ref bean="car3"/>
+        <!--<bean></bean>-->
+    </util:list>
 </beans>
