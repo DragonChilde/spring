@@ -663,7 +663,7 @@ Spring允许继承bean的配置，被继承的bean称为父bean。继承这个�
 3. 在配置bean时，通过init-method和destroy-method 属性为bean指定初始化和销毁方法
 4. bean的后置处理器
 	1. bean后置处理器允许在调用**初始化方法前后**对bean进行额外的处理
-	2. bean后置处理器对IOC容器里的所有bean实例逐一处理，而非单一实例。其典型		   应用是：检查bean属性的正确性或根据特定的标准更改bean的属性。
+	2. bean后置处理器对IOC容器里的所有bean实例逐一处理，而非单一实例。其典型应用是：检查bean属性的正确性或根据特定的标准更改bean的属性。
 	3. bean后置处理器时需要实现接口：org.springframework.beans.factory.config.BeanPostProcessor。在初始化方法被调用前后，Spring将把每个bean实例分别传递给上述接口的以下两个方法：
 		1. postProcessBeforeInitialization(Object, String) 
 		2. postProcessAfterInitialization(Object, String)
@@ -682,6 +682,7 @@ Spring允许继承bean的配置，被继承的bean称为父bean。继承这个�
 				     * Object bean: 正在被创建的bean对象.
 				     * String beanName: bena对象的id值.
 				     */
+					//可以根据需求返回特定的Object类型
 				    public Object postProcessBeforeInitialization(Object o, String s) throws BeansException {
 				        System.out.println("postProcessBeforeInitialization");
 				        return o;
@@ -690,6 +691,7 @@ Spring允许继承bean的配置，被继承的bean称为父bean。继承这个�
 				    /**
 				     * 在bean的生命周期的初始化方法之后执行
 				     */
+					//可以根据需求返回特定的Object类型
 				    public Object postProcessAfterInitialization(Object o, String s) throws BeansException {
 				        System.out.println("postProcessAfterInitialization");
 				        return o;
@@ -722,9 +724,253 @@ Spring允许继承bean的配置，被继承的bean称为父bean。继承这个�
 
 当bean的配置信息逐渐增多时，查找和修改一些bean的配置信息就变得愈加困难。这时可以将一部分信息提取到bean配置文件的外部，以properties格式的属性文件保存起来，同时在bean的配置文件中引用properties属性文件中的内容，从而实现一部分属性值在发生变化时仅修改properties属性文件即可。这种技术多用于连接数据库的基本信息的配置。
 
-1. 创建properties属性文件
-2. 引入context名称空间
-3. 指定properties属性文件的位置
-4. 从properties属性文件中引入属性值
+**直接配置**
+
+	  <!-- 直接配置c3p0连接池    ComboPooledDataSource-->
+    <bean id="datasource" class="com.mchange.v2.c3p0.ComboPooledDataSource">
+        <property name="driverClass" value="com.mysql.jdbc.Driver"/>
+        <property name="jdbcUrl" value="jdbc:mysql://120.77.237.175:9306/mysql"/>
+        <property name="user" value="root"/>
+        <property name="password" value="123456"/>
+        <property name="initialPoolSize" value="5"></property>
+        <property name="maxPoolSize" value="10"></property>
+    </bean>
+
+**使用外部的属性文件**
+
+**1. 创建properties属性文件**
+
+		# k = v 
+		jdbc.driverClass=com.mysql.jdbc.Driver
+		jdbc.jdbcUrl=jdbc:mysql://120.77.237.175:9306/mysql
+		jdbc.user=root
+		jdbc.password=123456
+
+**2. 引入context名称空间**
+		
+		xmlns:context="http://www.springframework.org/schema/context"
+		 xsi:schemaLocation="http://www.springframework.org/schema/context http://www.springframework.org/schema/context/spring-context-4.0.xsd"	
+
+**3. 指定properties属性文件的位置**
+
+	
+		<!-- classpath:xxx 表示属性文件位于类路径下 -->
+		<context:property-placeholder location="classpath:config/db.properties"/>
+
+**4. 从properties属性文件中引入属性值**
+
+	    <bean id="datasource" class="com.mchange.v2.c3p0.ComboPooledDataSource">
+	        <property name="driverClass"  value="${jdbc.driverClass}"/>
+	        <property name="jdbcUrl" value="${jdbc.jdbcUrl}"/>
+	        <property name="user" value="${jdbc.user}"/>
+	        <property name="password" value="${jdbc.password}"/>
+	    </bean>
+
+另:还有一种引入方式(通过指定class类的属性进行配置，这种方式比较旧)
+
+	 <bean class="org.springframework.beans.factory.config.PropertyPlaceholderConfigurer">
+		 <property name="location" value="classpath:db.properties"></property>
+	 </bean>
+
+**注意:classpath指的是在当前类路径下进行查询，如果是多个模块下的配置是classpath***
 
 **自动装配**
+
+**自动装配的概念**
+
+1. 手动装配：以value或ref的方式明确指定属性值都是手动装配。
+2. 自动装配：根据指定的装配规则，不需要明确指定，Spring自动将匹配的属性值注入bean中。
+
+**装配模式**
+
+1. 根据类型自动装配：将类型匹配的bean作为属性注入到另一个bean中。若IOC容器中有多个与目标bean类型一致的bean，Spring将无法判定哪个bean最合适该属性，所以不能执行自动装配
+2. 根据名称自动装配：必须将目标bean的名称和属性名设置的完全相同
+3. 通过构造器自动装配：当bean中存在多个构造器时，此种自动装配方式将会很复杂。不推荐使用。
+
+		 <!-- Car -->
+	    <bean id="car1" class="com.spring.autowire.bean.Car">
+	        <property name="brand" value="奔驰"></property>
+	        <property name="price" value="500000"></property>
+	    </bean>
+	
+	    <!-- Address -->
+	    <bean id="address" class="com.spring.autowire.bean.Address">
+	        <property name="province" value="山西省"></property>
+	        <property name="city" value="太原市"></property>
+	    </bean>
+		<!--
+	    <bean id="address2" class="com.spring.autowire.bean.Address">
+	        <property name="province" value="山西省"></property>
+	        <property name="city" value="太原市"></property>
+	    </bean>
+		-->
+	
+	    <!-- Person  : 演示自动装配
+	
+			 byName: 使用bean的属性名与IOC容器中<bean>的id值进行匹配. 匹配成功则装配成功.
+	
+			 byType: 使用bean的属性的类型与IOC容器中<bean>的class进行匹配。 如果唯一匹配则装配成功
+			                     如果匹配到多个兼容类型的bean。则跑出异常。
+		-->
+	    <bean id="person" class="com.spring.autowire.bean.Person" autowire="byType">
+	        <property name="name" value="Tom"></property>
+	    </bean>
+
+**选用建议**
+
+相对于使用注解的方式实现的自动装配，在XML文档中进行的自动装配略显笨拙，在项目中更多的使用注解的方式实现。
+
+
+**扫描组件**
+
+组件被上述注解标识后还需要通过Spring进行扫描才能够侦测到。
+
+1. 指定被扫描的package
+		
+		<!--spring-annotation.xml-->
+		<!--这里使用了context标签，务必要引入context声明-->
+		<!-- 组件扫描:  扫描加了注解的类，并管理到IOC容器中 
+		base-package: 基包. Spring会扫描指定包以及子包下所有的类，将带有注解的类管理到IOC容器中
+		-->
+		<context:component-scan base-package="com.spring.annotation"/>
+
+		
+		/**
+		 * @Cotroller 注解的作用:
+		 * 相当于在xml文件中:
+		 * <bean id="userController" class="com.atguigu.spring.annotation.controller.UserController">
+		 *
+		 * 注解默认的id值 就是类名首字母小写， 可以在注解中手动指定id值:@Controller(value="id值"),可以简写为:@Controller("id值")
+		 */
+		/**com.spring.annotation.controller.UserController**/
+		@Controller
+		public class UserController {
+		}
+
+		/**com.spring.annotation.TestAnnotation**/
+		 private static void test1()
+	    {
+	        ClassPathXmlApplicationContext classPathXmlApplicationContext = new ClassPathXmlApplicationContext("spring-annotation.xml");
+	        UserController userController = classPathXmlApplicationContext.getBean("userController", UserController.class);
+	        System.out.println(userController);
+	
+	        UserService userServiceImpl = classPathXmlApplicationContext.getBean("userServiceImpl", UserServiceImpl.class);
+	        System.out.println(userServiceImpl);
+	
+	        UserDao userDao = classPathXmlApplicationContext.getBean("userDaoImpl", UserDaoImpl.class);
+	        System.out.println(userDao);
+
+			/*
+			com.spring.annotation.controller.UserController@eafc191
+			com.spring.annotation.service.UserServiceImpl@612fc6eb
+			com.spring.annotation.dao.UserDaoImpl@1060b431
+			*/
+	    }
+
+2. 详细说明
+	1. base-package属性指定一个需要扫描的基类包，Spring容器将会扫描这个基类包及其子包中的所有类。
+	2. 当需要扫描多个包时可以使用逗号分隔。
+	3. 如果仅希望扫描特定的类而非基包下的所有类，可使用resource-pattern属性过滤特定的类
+	4. 包含与排除
+		- <context:include-filter>子节点表示要包含的目标类
+			
+			注意：通常需要与use-default-filters属性配合使用才能够达到“仅包含某些组件”这样的效果。即：通过将use-default-filters属性设置为false，			禁用默认过滤器，然后扫描的就只是include-filter中的规则指定的				组件了。
+		- <context:exclude-filter>子节点表示要排除在外的目标类
+		- component-scan下可以拥有若干个include-filter和exclude-filter子节点
+		- 过滤表达式
+
+
+				annotation	com.atguigu.XxxAnnotation	//过滤所有标注了XxxAnnotation的类。这个规则根据目标组件是否标注了指定类型的注解进行过滤。
+				assignable	com.atguigu.BaseXxx			//过滤所有BaseXxx类的子类。这个规则根据目标组件是否是指定类型的子类的方式进行过滤。
+				aspectj		com.atguigu.*Service+		//所有类名是以Service结束的，或这样的类的子类。这个规则根据AspectJ表达式进行过滤。
+				regex		com\.atguigu\.anno\.*		//所有com.atguigu.anno包下的类。这个规则根据正则表达式匹配到的类名进行过滤。
+				custom		com.atguigu.XxxTypeFilter	//使用XxxTypeFilter类通过编码的方式自定义过滤规则。该类必须实现org.springframework.core.type.filter.TypeFilter接口
+
+
+				<!-- 指定扫描  必须 设置use-default-filters="false"
+						排除扫描   use-default-filters="true"   -->
+				<!--指定扫描Contoller，只能扫描到@Controller注解-->
+				<context:component-scan base-package="com.spring.annotation" use-default-filters="false">
+			        <context:include-filter type="annotation" expression="org.springframework.stereotype.Controller"/>
+			    </context:component-scan>
+
+				//只能成功打印UserController
+				/**
+					com.spring.annotation.controller.UserController@77ec78b9
+				**/
+
+				<!--排除扫描Contoller,不扫描@Controller注解-->
+				 <context:component-scan base-package="com.spring.annotation" use-default-filters="true">
+			        <context:exclude-filter type="annotation" expression="org.springframework.stereotype.Controller"/>
+			    </context:component-scan>
+				
+				//只能成功打印UserServiceImpl和UserDaoImpl
+				/**
+				com.spring.annotation.service.UserServiceImpl@ed9d034
+				com.spring.annotation.dao.UserDaoImpl@6121c9d6
+				**/
+
+				
+3. JAR包 必须在原有JAR包组合的基础上再导入一个：spring-aop-4.3.18.RELEASE.jar
+
+**组件装配**
+
+1. Controller组件中往往需要用到Service组件的实例，Service组件中往往需要用到	Repository组件的实例。Spring可以通过注解的方式帮我们实现属性的装配。
+2. 实现依据,在指定要扫描的包时，<context:component-scan> 元素会自动注册一个bean的后置处理器：AutowiredAnnotationBeanPostProcessor的实例。该后置处理器可以自动装配标记了**@Autowired**、@Resource或@Inject注解的属性。
+3. @Autowired注解
+	1. 根据类型实现自动装配。
+	2. 构造器、普通字段(即使是非public)、一切具有参数的方法都可以应用@Autowired注解
+	3. 默认情况下，所有使用@Autowired注解的属性都需要被设置。当Spring找不到匹配的bean装配属性时，会抛出异常。
+	4. 若某一属性允许不被设置，可以设置@Autowired注解的required属性为 false
+	5. 默认情况下，当IOC容器里存在多个类型兼容的bean时，Spring会尝试匹配bean的id值是否与变量名相同，如果相同则进行装配。如果bean的id值不相同，通过类型的自动装配将无法工作。此时可以在@Qualifier注解里提供bean的名称。Spring	甚至允许在方法的形参上标注@Qualifiter注解以指定注入bean的名称。
+	6. @Autowired注解也可以应用在数组类型的属性上，此时Spring将会把所有匹配的bean进行自动装配。
+	7. @Autowired注解也可以应用在集合属性上，此时Spring读取该集合的类型信息，然后自动装配所有与之兼容的bean。
+	8. @Autowired注解用在java.util.Map上时，若该Map的键值为String，那么 Spring将自动装配与值类型兼容的bean作为值，并以bean的id值作为键。
+4. @Resource注解要求提供一个bean名称的属性，若该属性为空，则自动采用标注处的变量或方法名作为bean的名称。(基本不用)
+5. @Inject和@Autowired注解一样也是按类型注入匹配的bean，但没有reqired属性。(基本不用)
+
+		@Repository("userDao")
+		public class UserDaoMybatisImpl implements UserDao{
+		
+		    public void addUser() {
+		        System.out.println("UserDao  Mybatis .....");
+		    }
+		}
+	
+		@Repository
+		public class UserDaoImpl implements UserDao{
+		
+		    public void addUser() {
+		        System.out.println("UserDao operation...........");
+		    }
+		}
+
+
+		/**情况一：多定义一个UserDaoMybatisImpl,注解@Repository,这时运行会报异常,因为存在两个byType，只能指定bean id,@Repository("userDao")
+		情况二:
+		**/
+		@Controller
+		public class UserController {
+			/**
+			 *  @Autowired 完成bean属性的自动装配
+			 *  
+			 *  工作机制:  首先会使用byType的方式进行自动装配，如果能唯一匹配，则装配成功， 
+			 *           如果匹配到多个兼容类型的bean, 还会尝试使用byName的方式进行唯一确定. 
+			 *           如果能唯一确定，则装配成功，如果不能唯一确定，则装配失败，抛出异常. 
+			 *  
+			 *  默认情况下， 使用@Autowired标注的属性必须被装配，如果装配不了，也会抛出异常. 
+			 *  可以使用required=false来设置不是必须要被装配. 
+			 *  
+			 *  如果匹配到多个兼容类型的bean，可以使用@Qualifier来进一步指定要装配的bean的id值 。
+			 *  
+			 *  @Autowired @Qualifier 注解即可在成员变量上，也可以加在对应的set方法上.. 
+			 *  
+			 */
+		    @Autowired
+		    private UserService userService;
+		
+		    public void regist()
+		    {
+		        userService.handleAddUser();
+		    }
+		}
