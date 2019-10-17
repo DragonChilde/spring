@@ -2,6 +2,7 @@ package com.spring.annotation.service;
 
 import com.spring.annotation.dao.UserDao;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
 
 /**
@@ -10,9 +11,17 @@ import org.springframework.stereotype.Service;
  */
 @Service
 public class UserServiceImpl implements UserService {
-
-    @Autowired
+    @Autowired(required = false)
+    @Qualifier("userDao")
     private UserDao userDao;
+
+   /* @Autowired
+    @Qualifier("userDao")
+    public void setUserDao(UserDao userDao)
+    {
+        this.userDao = userDao;
+    }*/
+
 
     public void handleAddUser() {
         userDao.addUser();

@@ -7,6 +7,7 @@ import org.springframework.stereotype.Repository;
  * @create 2019/10/16 17:54
  */
 @Repository("userDao")
+/*@Repository*/
 public class UserDaoMybatisImpl implements UserDao{
 
     public void addUser() {

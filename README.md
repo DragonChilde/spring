@@ -838,8 +838,7 @@ Spring允许继承bean的配置，被继承的bean称为父bean。继承这个�
 		/**
 		 * @Cotroller 注解的作用:
 		 * 相当于在xml文件中:
-		 * <bean id="userController" class="com.atguigu.spring.annotation.controller.UserController">
-		 *
+		 * <bean id="userController" class="com.spring.annotation.controller.UserController">
 		 * 注解默认的id值 就是类名首字母小写， 可以在注解中手动指定id值:@Controller(value="id值"),可以简写为:@Controller("id值")
 		 */
 		/**com.spring.annotation.controller.UserController**/
@@ -880,11 +879,11 @@ Spring允许继承bean的配置，被继承的bean称为父bean。继承这个�
 		- 过滤表达式
 
 
-				annotation	com.atguigu.XxxAnnotation	//过滤所有标注了XxxAnnotation的类。这个规则根据目标组件是否标注了指定类型的注解进行过滤。
-				assignable	com.atguigu.BaseXxx			//过滤所有BaseXxx类的子类。这个规则根据目标组件是否是指定类型的子类的方式进行过滤。
-				aspectj		com.atguigu.*Service+		//所有类名是以Service结束的，或这样的类的子类。这个规则根据AspectJ表达式进行过滤。
-				regex		com\.atguigu\.anno\.*		//所有com.atguigu.anno包下的类。这个规则根据正则表达式匹配到的类名进行过滤。
-				custom		com.atguigu.XxxTypeFilter	//使用XxxTypeFilter类通过编码的方式自定义过滤规则。该类必须实现org.springframework.core.type.filter.TypeFilter接口
+				annotation	com.spring.XxxAnnotation	//过滤所有标注了XxxAnnotation的类。这个规则根据目标组件是否标注了指定类型的注解进行过滤。
+				assignable	com.spring.BaseXxx			//过滤所有BaseXxx类的子类。这个规则根据目标组件是否是指定类型的子类的方式进行过滤。
+				aspectj		com.spring.*Service+		//所有类名是以Service结束的，或这样的类的子类。这个规则根据AspectJ表达式进行过滤。
+				regex		com\.spring\.anno\.*		//所有com.atguigu.anno包下的类。这个规则根据正则表达式匹配到的类名进行过滤。
+				custom		com.spring.XxxTypeFilter	//使用XxxTypeFilter类通过编码的方式自定义过滤规则。该类必须实现org.springframework.core.type.filter.TypeFilter接口
 
 
 				<!-- 指定扫描  必须 设置use-default-filters="false"
@@ -915,8 +914,27 @@ Spring允许继承bean的配置，被继承的bean称为父bean。继承这个�
 
 **组件装配**
 
-1. Controller组件中往往需要用到Service组件的实例，Service组件中往往需要用到	Repository组件的实例。Spring可以通过注解的方式帮我们实现属性的装配。
+1. Controller组件中往往需要用到Service组件的实例，Service组件中往往需要用到Repository组件的实例。Spring可以通过注解的方式帮我们实现属性的装配。
 2. 实现依据,在指定要扫描的包时，<context:component-scan> 元素会自动注册一个bean的后置处理器：AutowiredAnnotationBeanPostProcessor的实例。该后置处理器可以自动装配标记了**@Autowired**、@Resource或@Inject注解的属性。
+
+		/**
+		 * @Cotroller 注解的作用:
+		 * 相当于在xml文件中:
+		 * <bean id="userController" class="com.spring.annotation.controller.UserController">
+		 * 注解默认的id值 就是类名首字母小写， 可以在注解中手动指定id值:@Controller(value="id值"),可以简写为:@Controller("id值")
+		 */
+		@Controller
+		public class UserController {
+		
+		    @Autowired
+		    private UserService userService;
+		
+		    public void regist()
+		    {
+		        userService.handleAddUser();
+		    }
+		}
+
 3. @Autowired注解
 	1. 根据类型实现自动装配。
 	2. 构造器、普通字段(即使是非public)、一切具有参数的方法都可以应用@Autowired注解
@@ -946,17 +964,20 @@ Spring允许继承bean的配置，被继承的bean称为父bean。继承这个�
 		}
 
 
-		/**情况一：多定义一个UserDaoMybatisImpl,注解@Repository,这时运行会报异常,因为存在两个byType，只能指定bean id,@Repository("userDao")
-		情况二:
+		/**
+		情况一：定义两个类继承UserDao,注解@Repository,这时运行会报异常,因为要byType查找到两个UserDaoMybatisImpl和UserDaoImpl，只能在其中之一里指定一个唯一bean id值,@Repository("userDao"),才可注入成功
+		情况二:可以通过@Qualifier(id值)加载指定的类,@Qualifier("userDaoMybatisImpl")
+		情况三:@Autowired(required = false)可以设置成有就装配，没有就不装配，把上面两个类的@Repository注释掉，这时侯userDao取到的是默认值NULL，当方法调用时会报空指针异常java.lang.NullPointerException
 		**/
-		@Controller
-		public class UserController {
+		@Service
+		public class UserServiceImpl implements UserService {
 			/**
 			 *  @Autowired 完成bean属性的自动装配
 			 *  
 			 *  工作机制:  首先会使用byType的方式进行自动装配，如果能唯一匹配，则装配成功， 
 			 *           如果匹配到多个兼容类型的bean, 还会尝试使用byName的方式进行唯一确定. 
 			 *           如果能唯一确定，则装配成功，如果不能唯一确定，则装配失败，抛出异常. 
+			 *           byType和byName取到的值都必须是唯一的，不是有多或少
 			 *  
 			 *  默认情况下， 使用@Autowired标注的属性必须被装配，如果装配不了，也会抛出异常. 
 			 *  可以使用required=false来设置不是必须要被装配. 
@@ -966,11 +987,36 @@ Spring允许继承bean的配置，被继承的bean称为父bean。继承这个�
 			 *  @Autowired @Qualifier 注解即可在成员变量上，也可以加在对应的set方法上.. 
 			 *  
 			 */
+			
+			@Autowired(required = false)
+		    @Qualifier("userDao")
+		    private UserDao userDao;
+
+			//第二种注入方式，可以通过设置set方法注入到参数里,但要多写一个方法，没上面直接在变量里注入方便
+			/*
 		    @Autowired
-		    private UserService userService;
-		
-		    public void regist()
+		    @Qualifier("userDao")
+		    public void setUserDao(UserDao userDao)
 		    {
-		        userService.handleAddUser();
+		        this.userDao = userDao;
+		    }
+			*/
+		
+		    public void handleAddUser() {
+		        userDao.addUser();
 		    }
 		}
+
+
+# AOP #
+
+**动态代理**
+
+动态代理的原理
+
+代理设计模式的原理：使用一个代理将对象包装起来，然后用该代理对象取代原始对象。任何对原始对象的调用都要通过代理。代理对象决定是否以及何时将方法调用转到原始对象上。
+
+**动态代理的方式**
+
+1. 基于接口实现动态代理：JDK动态代理
+2. 基于继承实现动态代理： Cglib、Javassist动态代理 
