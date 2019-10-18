@@ -1020,3 +1020,344 @@ Spring允许继承bean的配置，被继承的bean称为父bean。继承这个�
 
 1. 基于接口实现动态代理：JDK动态代理
 2. 基于继承实现动态代理： Cglib、Javassist动态代理 
+
+
+		public interface ArithmeticCalculator {
+		
+		    public int add(int i,int j);
+		
+		    public int sub(int i,int j);
+		
+		    public int mul(int i,int j);
+		
+		    public int div(int i,int j);
+		}
+		
+		public class ArithmeticCalculatorImpl implements ArithmeticCalculator{
+		    public int add(int i, int j) {
+		       int result = i + j;
+		       return result;
+		    }
+		
+		    public int sub(int i, int j) {
+		        int result = i - j;
+		        return result;
+		    }
+		
+		    public int mul(int i, int j) {
+		        int result = i * j;
+		        return result;
+		    }
+		
+		    public int div(int i, int j) {
+		        int result = i  / j;
+		        return result;
+		    }
+		}
+
+上面是一个计数器类，如果要增加日志记录，最Low的办法是在每个方法里都打印输出日志,这样会有问题:
+
+1. 代码混乱：越来越多的非业务需求(日志和验证等)加入后，原有的业务方法急剧膨胀。每个方法在处理核心逻辑的同时还必须兼顾其他多个关注点
+2. 代码分散: 以日志需求为例，只是为了满足这个单一需求，就不得不在多个模块（方法）里多次重复相同的日志代码。如果日志需求发生变化，必须修改所有模块。
+
+		/**
+		 * 生成代理对象。
+		 *
+		 * JDK的动态代理:
+		 * 	 1. Proxy : 是所有动态代理类的父类， 专门为用户生成代理类或者是代理对象
+		 * 		 	public static Class<?> getProxyClass(ClassLoader loader,
+		 Class<?>... interfaces)
+		 用于生成代理类的Class对象.
+		
+		 * 			public static Object newProxyInstance(ClassLoader loader,
+		 Class<?>[] interfaces,
+		 InvocationHandler h)
+		 用于生成代理对象
+		
+		 *   2. InvocationHandler :完成动态代理的整个过程.
+		 *   		public Object invoke(Object proxy, Method method, Object[] args)
+		 throws Throwable;
+		 *
+		 */
+		
+		public class ArithmeticCalculatorProxy {
+		
+		    //动态代理:    目标对象     如何获取代理对象      代理要做什么
+		
+		    //目标对象
+		    private ArithmeticCalculator target;
+		
+		    public ArithmeticCalculatorProxy(ArithmeticCalculator target) {
+		        this.target = target;
+		    }
+		
+		    //获取代理对象的方法
+		    public Object getProxy()
+		    {
+		        //代理对象
+		        Object proxy;
+		
+		        /**
+		         * loader:  ClassLoader对象。 类加载器对象.  帮我们加载动态生成的代理类。
+		         *
+		         * interfaces: 接口们.  提供目标对象的所有的接口.  目的是让代理对象保证与目标对象都有接口中想同的方法.
+		         *
+		         * h:  InvocationHandler类型的对象.
+		         */
+		
+		        ClassLoader classLoader = target.getClass().getClassLoader();
+		        Class<?>[] interfaces = target.getClass().getInterfaces();
+		
+		        proxy = Proxy.newProxyInstance(classLoader, interfaces, new InvocationHandler() {
+		            /**
+		             * invoke:  代理对象调用代理方法， 会回来调用invoke方法。
+		             *
+		             * proxy: 代理对象 ， 在invoke方法中一般不会使用.
+		             *
+		             * method: 正在被调用的方法对象.
+		             *
+		             * args:   正在被调用的方法的参数.
+		             */
+					/**注意:invoke()方法在这里并没有被调用,只是相当于继承一个类重写一个了方法,真正何时被调用可以在下面的(模拟底层生成的动态代理类)可以看到**/
+		            public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
+		
+		                //将方法的调用转回到目标对象上.
+		
+		                //获取方法的名字
+		                String methodName = method.getName();
+		                //记录日志
+		                System.out.println("LoggingProxy: method is "+methodName+"! params is "+ Arrays.asList(args));
+		                Object result = method.invoke(target,args);
+		                //相当于执行ArithmeticCalculatorImpl中的+ - * /
+		
+		                //记录日志
+		                System.out.println("LoggingProxy: result is "+result);
+		                return result;
+		            }
+		        });
+		
+		        return proxy;
+		    }
+		}
+
+	    private static void test1()
+		{
+		    //目标对象
+		    ArithmeticCalculator target = new ArithmeticCalculatorImpl();
+		
+		    ArithmeticCalculatorProxy arithmeticCalculatorProxy = new ArithmeticCalculatorProxy(target);
+		    //获取代理对象
+		    Object proxy = arithmeticCalculatorProxy.getProxy();
+		    // 转回具体的类型.
+		    ArithmeticCalculator arithmeticCalculator = (ArithmeticCalculator) proxy;
+		    int result = arithmeticCalculator.add(1, 2);
+		    System.out.println(result);
+
+			/**
+			LoggingProxy: method is add! params is [1, 2]
+			LoggingProxy: result is 3
+			result is 3
+			**/
+		}
+
+**问题:**
+
+1. 代理对象能否转换成目标对象的类型?
+
+	不能,通过上面可看到代理对象和目标对象是兄弟关系，两个是同级的，但它们都是继承于同一个接口
+
+2. 代理对象调用代理方法，为什么会执行InvocationHandler中的invoke 方法
+
+		/**通过打印代理对象可以看到当前我们使用的代理对象名**/
+		System.out.println(arithmeticCalculator.getClass().getName());
+		/**
+			com.sun.proxy.$Proxy0
+		**/
+
+		/**
+		 * 模拟底层生成的动态代理类
+		 */
+		/**代理对象必须实现代理类和继承调用对象的接口**/
+		class $Proxy0 extends Proxy implements ArithmeticCalculator{
+			
+			//必须生成构造函数和重写方法，构造函数要传入的参数h最终会赋值到java.lang.reflect.Proxy.h
+		    public $Proxy0(InvocationHandler h) {
+		        super(h);
+		    }
+		
+			//因此每个代理对象的方法调用最终都是通过父类Proxy的h去invoke,进入的是重写的InvocationHandler.invoke方法，
+			//注意：动态代理的原理里代理对象决定是否以及何时将方法调用转到原始对象上,这句话就是在这里体现了，代理对象在这里只是通过代理Proxy.h去调invoke()方法，并没有实际实现
+		    public int add(int i, int j) {
+		        //super.h.invoke(this,方法对象,方法参数)
+		        return 0;
+		    }
+		
+		    public int sub(int i, int j) {
+		        return 0;
+		    }
+		
+		    public int mul(int i, int j) {
+		        return 0;
+		    }
+		
+		    public int div(int i, int j) {
+		        return 0;
+		    }
+		}
+
+动态代理是虚拟机在调用时自动创建的，以下是保存生成的动态代理类,
+
+	Properties properties = System.getProperties();
+ 	properties.put("sun.misc.ProxyGenerator.saveGeneratedFiles", "true");
+
+生成的代理类,发现与上面模拟的动态代理类基本累似
+
+	public final class $Proxy0 extends Proxy implements ArithmeticCalculator {
+	    private static Method m1;
+	    private static Method m2;
+	    private static Method m5;
+	    private static Method m3;
+	    private static Method m4;
+	    private static Method m6;
+	    private static Method m0;
+	
+	    public $Proxy0(InvocationHandler var1) throws  {
+	        super(var1);
+	    }
+	
+	    public final boolean equals(Object var1) throws  {
+	        try {
+	            return (Boolean)super.h.invoke(this, m1, new Object[]{var1});
+	        } catch (RuntimeException | Error var3) {
+	            throw var3;
+	        } catch (Throwable var4) {
+	            throw new UndeclaredThrowableException(var4);
+	        }
+	    }
+	
+	    public final String toString() throws  {
+	        try {
+	            return (String)super.h.invoke(this, m2, (Object[])null);
+	        } catch (RuntimeException | Error var2) {
+	            throw var2;
+	        } catch (Throwable var3) {
+	            throw new UndeclaredThrowableException(var3);
+	        }
+	    }
+	
+	    public final int mul(int var1, int var2) throws  {
+	        try {
+	            return (Integer)super.h.invoke(this, m5, new Object[]{var1, var2});
+	        } catch (RuntimeException | Error var4) {
+	            throw var4;
+	        } catch (Throwable var5) {
+	            throw new UndeclaredThrowableException(var5);
+	        }
+	    }
+	
+	    public final int add(int var1, int var2) throws  {
+	        try {
+	            return (Integer)super.h.invoke(this, m3, new Object[]{var1, var2});
+	        } catch (RuntimeException | Error var4) {
+	            throw var4;
+	        } catch (Throwable var5) {
+	            throw new UndeclaredThrowableException(var5);
+	        }
+	    }
+	
+	    public final int sub(int var1, int var2) throws  {
+	        try {
+	            return (Integer)super.h.invoke(this, m4, new Object[]{var1, var2});
+	        } catch (RuntimeException | Error var4) {
+	            throw var4;
+	        } catch (Throwable var5) {
+	            throw new UndeclaredThrowableException(var5);
+	        }
+	    }
+	
+	    public final int div(int var1, int var2) throws  {
+	        try {
+	            return (Integer)super.h.invoke(this, m6, new Object[]{var1, var2});
+	        } catch (RuntimeException | Error var4) {
+	            throw var4;
+	        } catch (Throwable var5) {
+	            throw new UndeclaredThrowableException(var5);
+	        }
+	    }
+	
+	    public final int hashCode() throws  {
+	        try {
+	            return (Integer)super.h.invoke(this, m0, (Object[])null);
+	        } catch (RuntimeException | Error var2) {
+	            throw var2;
+	        } catch (Throwable var3) {
+	            throw new UndeclaredThrowableException(var3);
+	        }
+	    }
+	
+	    static {
+	        try {
+	            m1 = Class.forName("java.lang.Object").getMethod("equals", Class.forName("java.lang.Object"));
+	            m2 = Class.forName("java.lang.Object").getMethod("toString");
+	            m5 = Class.forName("com.spring.aop.poxy.ArithmeticCalculator").getMethod("mul", Integer.TYPE, Integer.TYPE);
+	            m3 = Class.forName("com.spring.aop.poxy.ArithmeticCalculator").getMethod("add", Integer.TYPE, Integer.TYPE);
+	            m4 = Class.forName("com.spring.aop.poxy.ArithmeticCalculator").getMethod("sub", Integer.TYPE, Integer.TYPE);
+	            m6 = Class.forName("com.spring.aop.poxy.ArithmeticCalculator").getMethod("div", Integer.TYPE, Integer.TYPE);
+	            m0 = Class.forName("java.lang.Object").getMethod("hashCode");
+	        } catch (NoSuchMethodException var2) {
+	            throw new NoSuchMethodError(var2.getMessage());
+	        } catch (ClassNotFoundException var3) {
+	            throw new NoClassDefFoundError(var3.getMessage());
+	        }
+	    }
+	}
+
+上面创建代理是通过newProxyInstance()方法,下面是通过getProxyClass()创建代理对象
+
+	public class ArithmeticCalculatorProxy2 {
+	    private ArithmeticCalculator target;
+	
+	    public ArithmeticCalculatorProxy2(ArithmeticCalculator target) {
+	        this.target = target;
+	    }
+	
+	    public Object getProxy() throws Exception
+	    {
+	        Object proxy;
+	
+	        ClassLoader classLoader = target.getClass().getClassLoader();
+	        Class<?>[] interfaces = target.getClass().getInterfaces();
+	        Class<?> proxyClass = Proxy.getProxyClass(classLoader,interfaces);
+	
+			//通过解析代理对象，可知要在构造函数要传入InvocationHandler对象
+	        Constructor<?> con = proxyClass.getDeclaredConstructor(InvocationHandler.class);
+	
+	        proxy = con.newInstance(new InvocationHandler() {
+	            public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
+	                //将方法的调用转回到目标对象上.
+	
+	                //获取方法的名字
+	                String methodName = method.getName();
+	                //记录日志
+	                System.out.println("LoggingProxy: method is "+methodName+"! params is "+ Arrays.asList(args));
+	                Object result = method.invoke(target,args);
+	                //相当于执行ArithmeticCalculatorImpl中的+ - * /
+	
+	                //记录日志
+	                System.out.println("LoggingProxy: result is "+result);
+	                return result;
+	            }
+	        });
+	
+	
+	        return proxy;
+	
+			//最后的调用结果与上面创建的代理对象方法一样，通过上面的代理对象创建可以清晰看出为什么要传InvocationHandler类型
+	    }
+	}
+
+**另:**
+
+- **上面的代理对象示例是通过在方法里定义好InvocationHandler类型作用的，也可改成Object作用到全部类**
+- **上面实现的示例都是通过代理对象类的接口，这方法的好处是可以把接口里已经定义好的方法都调用**
+- **如果在ArithmeticCalculatorImpl类里定义了新方法,这时就不能使用基于接口的代理对象方法了，会报异常,只能通过基于继承的代理对象ArithmeticCalculatorImpl来实现**
