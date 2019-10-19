@@ -1374,7 +1374,7 @@ Spring允许继承bean的配置，被继承的bean称为父bean。继承这个�
 	2. 业务模块更简洁，只包含核心业务代码
 	3. AOP图解
 
-![](https://github.com/DragonChilde/MarkdownPhotos/blob/master/photos/3.jpg?raw=true)
+![](https://github.com/DragonChilde/MarkdownPhotos/blob/master/photos/3.png?raw=true)
 
 **AOP术语**
 
