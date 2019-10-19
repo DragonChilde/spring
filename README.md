@@ -1372,7 +1372,7 @@ Spring允许继承bean的配置，被继承的bean称为父bean。继承这个�
 	2. 业务模块更简洁，只包含核心业务代码
 	3. AOP图解
 
-![](https://img-blog.csdnimg.cn/20190421170451560.png?x-oss-process=image/watermark,type_ZmFuZ3poZW5naGVpdGk,shadow_10,text_aHR0cHM6Ly9ibG9nLmNzZG4ubmV0L3dlaXhpbl80NDI0MDM3MA==,size_16,color_FFFFFF,t_70)
+![](https://github.com/DragonChilde/MarkdownPhotos/blob/master/photos/3.jpg?raw=true)
 
 **AOP术语**
 
@@ -1383,7 +1383,7 @@ Spring允许继承bean的配置，被继承的bean称为父bean。继承这个�
 - 代理(Proxy)：向目标对象应用通知之后创建的代理对象
 - 连接点(Joinpoint):横切关注点在程序代码中的具体体现，对应程序执行的某个特定位置。例如：类某个方法调用前、调用后、方法捕获到异常后等。在应用程序中可以使用横纵两个坐标来定位一个具体的连接点：
 
-	![](https://github.com/DragonChilde/MarkdownPhotos/blob/master/photos/1.png?raw=true)
+![](https://github.com/DragonChilde/MarkdownPhotos/blob/master/photos/2.png)
 
 - 切入点(pointcut)：定位连接点的方式。每个类的方法中都包含多个连接点，所以连接点是类中客观存在的事物。如果把连接点看作数据库中的记录，那么切入点就是查询条件——AOP可以通过切入点定位到特定的连接点。切点通过org.springframework.aop.Pointcut 接口进行描述，它使用类和方法作为连接点的查询条件。
-![](https://img-blog.csdnimg.cn/20190421180122809.png?x-oss-process=image/watermark,type_ZmFuZ3poZW5naGVpdGk,shadow_10,text_aHR0cHM6Ly9ibG9nLmNzZG4ubmV0L3dlaXhpbl80NDI0MDM3MA==,size_16,color_FFFFFF,t_70)
+![](https://github.com/DragonChilde/MarkdownPhotos/blob/master/photos/4.jpg?raw=true)
