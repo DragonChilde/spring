@@ -1127,8 +1127,7 @@ Spring允许继承bean的配置，被继承的bean称为父bean。继承这个�
 		                String methodName = method.getName();
 		                //记录日志
 		                System.out.println("LoggingProxy: method is "+methodName+"! params is "+ Arrays.asList(args));
-		                Object result = method.invoke(target,args);
-		                //相当于执行ArithmeticCalculatorImpl中的+ - * /
+		                Object result = method.invoke(target,args);// 目标对象执行目标方法. 相当于执行ArithmeticCalculatorImpl中的+ - * /
 		
 		                //记录日志
 		                System.out.println("LoggingProxy: result is "+result);
@@ -1361,3 +1360,30 @@ Spring允许继承bean的配置，被继承的bean称为父bean。继承这个�
 - **上面的代理对象示例是通过在方法里定义好InvocationHandler类型作用的，也可改成Object作用到全部类**
 - **上面实现的示例都是通过代理对象类的接口，这方法的好处是可以把接口里已经定义好的方法都调用**
 - **如果在ArithmeticCalculatorImpl类里定义了新方法,这时就不能使用基于接口的代理对象方法了，会报异常,只能通过基于继承的代理对象ArithmeticCalculatorImpl来实现**
+
+
+**AOP概述**
+
+1. AOP(Aspect-Oriented Programming，**面向切面编程**)：是一种新的方法论，是对传  统 OOP(Object-Oriented Programming，面向对象编程)的补充。
+2. AOP编程操作的主要对象是切面(aspect)，而**切面模块化横切关注点**。
+3. 在应用AOP编程时，仍然需要定义公共功能，但可以明确的定义这个功能应用在哪里，以什么方式应用，并且不必修改受影响的类。这样一来横切关注点就被模块化到特殊的类里——这样的类我们通常称之为“切面”。
+4. AOP的好处：
+	1. 每个事物逻辑位于一个位置，代码不分散，便于维护和升级
+	2. 业务模块更简洁，只包含核心业务代码
+	3. AOP图解
+
+![](https://img-blog.csdnimg.cn/20190421170451560.png?x-oss-process=image/watermark,type_ZmFuZ3poZW5naGVpdGk,shadow_10,text_aHR0cHM6Ly9ibG9nLmNzZG4ubmV0L3dlaXhpbl80NDI0MDM3MA==,size_16,color_FFFFFF,t_70)
+
+**AOP术语**
+
+- 横切关注点:从每个方法中抽取出来的同一类非核心业务。
+- 切面(Aspect):封装横切关注点信息的类，每个关注点体现为一个通知方法。
+- 通知(Advice):切面必须要完成的各个具体工作
+- 目标(Target):被通知的对象
+- 代理(Proxy)：向目标对象应用通知之后创建的代理对象
+- 连接点(Joinpoint):横切关注点在程序代码中的具体体现，对应程序执行的某个特定位置。例如：类某个方法调用前、调用后、方法捕获到异常后等。在应用程序中可以使用横纵两个坐标来定位一个具体的连接点：
+
+	![](https://github.com/DragonChilde/MarkdownPhotos/blob/master/photos/1.png?raw=true)
+
+- 切入点(pointcut)：定位连接点的方式。每个类的方法中都包含多个连接点，所以连接点是类中客观存在的事物。如果把连接点看作数据库中的记录，那么切入点就是查询条件——AOP可以通过切入点定位到特定的连接点。切点通过org.springframework.aop.Pointcut 接口进行描述，它使用类和方法作为连接点的查询条件。
+![](https://img-blog.csdnimg.cn/20190421180122809.png?x-oss-process=image/watermark,type_ZmFuZ3poZW5naGVpdGk,shadow_10,text_aHR0cHM6Ly9ibG9nLmNzZG4ubmV0L3dlaXhpbl80NDI0MDM3MA==,size_16,color_FFFFFF,t_70)
