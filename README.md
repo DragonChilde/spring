@@ -1016,6 +1016,8 @@ Spring允许继承bean的配置，被继承的bean称为父bean。继承这个�
 
 代理设计模式的原理：使用一个代理将对象包装起来，然后用该代理对象取代原始对象。任何对原始对象的调用都要通过代理。代理对象决定是否以及何时将方法调用转到原始对象上。
 
+![](https://github.com/DragonChilde/MarkdownPhotos/blob/master/photos/5.png?raw=true)
+
 **动态代理的方式**
 
 1. 基于接口实现动态代理：JDK动态代理
