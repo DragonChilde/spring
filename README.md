@@ -2203,13 +2203,13 @@ Main
 
 
 
-1. REQUIRED传播行为
+1. **REQUIRED传播行为(默认,整个事务流程只有唯一事务，要么全部成功，要么全部失败,不受其它事务影响)**
 
-	当bookService的purchase()方法被另一个事务方法checkout()调用时，它默认会在现有的事务内运行。这个默认的传播行为就是REQUIRED。因此在checkout()方法的开始和终止边界内只有一个事务。这个事务只在checkout()方法结束的时候被提交，结果用户一本书都买不了
+	当bookService的buyBook()方法被另一个事务方法purchase()调用时，它默认会在现有的事务内运行。这个默认的传播行为就是REQUIRED。因此在purchase()方法的开始和终止边界内只有一个事务。这个事务只在purchase()方法结束的时候被提交，结果用户一本书都买不了
 
 	![](https://github.com/DragonChilde/MarkdownPhotos/blob/master/photos/6.png)
 
-2. REQUIRES_NEW传播行为
+2. **REQUIRES_NEW传播行为(在事务1执行过程中,如果有事务2,事务1会先挂起，等事务2执行完再执行事务1,之后的事务3,4,5...也一样，事务1挂起,执行完再执行事务1)**
 
 	表示该方法必须启动一个新事务，并在自己的事务内运行。如果有事务在运行，就应该先挂起它
 
@@ -2236,3 +2236,31 @@ Main
 		        bookShopDao.updateUserAccount(username,price);
 		    }
 		}
+
+**事务的隔离级别isolation**
+
+	//数据库的隔离级别(等级越高,效率越低)
+	 *   		1    读未提交      	脏读
+	 *   		2    读已提交      	不可重复读
+	 *    		4    可重复读      	幻读
+	 *    		8    串行化(排队)    效率低。
+
+**数据库事务并发问题**
+
+假设现在有两个事务：Transaction01和Transaction02并发执行
+
+1. 脏读
+	1. Transaction01将某条记录的AGE值从20修改为30
+	2. ransaction02读取了Transaction01更新后的值：30。
+	3. Transaction01回滚，AGE值恢复到了20。
+	4. Transaction02读取到的30就是一个无效的值
+
+2. 不可重复读
+	1. Transaction01读取了AGE值为20。
+	2. Transaction02将AGE值修改为30。
+	3. Transaction01再次读取AGE值为30，和第一次读取不一致。
+
+3. 幻读
+	1. Transaction01读取了STUDENT表中的一部分数据。
+	2. Transaction02向STUDENT表中插入了新的行。
+	3. Transaction01读取了STUDENT表时，多出了一些行

@@ -71,8 +71,7 @@ public class ArithmeticCalculatorProxy {
                 String methodName = method.getName();
                 //记录日志
                 System.out.println("LoggingProxy: method is "+methodName+"! params is "+ Arrays.asList(args));
-                Object result = method.invoke(target,args);
-                //相当于执行ArithmeticCalculatorImpl中的+ - * /
+                Object result = method.invoke(target,args); // 目标对象执行目标方法. 相当于执行ArithmeticCalculatorImpl中的+ - * /
 
                 //记录日志
                 System.out.println("LoggingProxy: result is "+result);
