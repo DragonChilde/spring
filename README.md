@@ -1341,8 +1341,7 @@ Spring允许继承bean的配置，被继承的bean称为父bean。继承这个�
 	                String methodName = method.getName();
 	                //记录日志
 	                System.out.println("LoggingProxy: method is "+methodName+"! params is "+ Arrays.asList(args));
-	                Object result = method.invoke(target,args);
-	                //相当于执行ArithmeticCalculatorImpl中的+ - * /
+	                Object result = method.invoke(target,args);		// 目标对象执行目标方法. 相当于执行ArithmeticCalculatorImpl中的+ - * /
 	
 	                //记录日志
 	                System.out.println("LoggingProxy: result is "+result);
@@ -1389,3 +1388,851 @@ Spring允许继承bean的配置，被继承的bean称为父bean。继承这个�
 
 - 切入点(pointcut)：定位连接点的方式。每个类的方法中都包含多个连接点，所以连接点是类中客观存在的事物。如果把连接点看作数据库中的记录，那么切入点就是查询条件——AOP可以通过切入点定位到特定的连接点。切点通过org.springframework.aop.Pointcut 接口进行描述，它使用类和方法作为连接点的查询条件。
 ![](https://github.com/DragonChilde/MarkdownPhotos/blob/master/photos/4.jpg?raw=true)
+
+**AspectJ**:Java社区里最完整最流行的AOP框架.在Spring2.0以上版本中，可以使用基于AspectJ注解或基于XML配置的AOP
+
+**在Spring中启用AspectJ注解支持**
+
+1. 导入JAR包
+
+	- com.springsource.net.sf.cglib-2.2.0.jar
+	- com.springsource.org.aopalliance-1.0.0.jar
+	- com.springsource.org.aspectj.weaver-1.6.8.RELEASE.jar 
+	- spring-aop-4.0.0.RELEASE.jar
+	- spring-aspects-4.0.0.RELEASE.jar
+
+2. 引入aop名称空间
+
+		xmlns:aop="http://www.springframework.org/schema/aop"
+		xsi:schemaLocation="http://www.springframework.org/schema/aop http://www.springframework.org/schema/aop/spring-aop-4.0.xsd"
+
+3. 配置
+	
+		<aop:aspectj-autoproxy />
+	当Spring IOC容器侦测到bean配置文件中的<aop:aspectj-autoproxy>元素时，会自动为与AspectJ切面匹配的bean创建代理
+
+**用AspectJ注解声明切面**
+
+1. 要在Spring中声明AspectJ切面，只需要在IOC容器中将切面声明为bean实例
+2. 当在Spring IOC容器中初始化AspectJ切面之后，Spring IOC容器就会为那些与 AspectJ切面相匹配的bean创建代理
+3. 在AspectJ注解中，切面只是一个带有@Aspect注解的Java类，它往往要包含很多通知
+4. 通知是标注有某种注解的简单的Java方法
+5. AspectJ支持5种类型的通知注
+	1. @Before：前置通知，在方法执行之前执行
+	2. @After：后置通知，在方法执行之后执行
+	3. @AfterRunning：返回通知，在方法返回结果之后执行
+	4. @AfterThrowing：异常通知，在方法抛出异常之后执行
+	5. @Around：环绕通知，围绕着方法执行
+
+# AOP细节 #
+
+**切入点表达式**
+
+通过表达式的方式定位一个或多个具体的连接点
+
+**语法细节**
+
+1. 切入点表达式的语法格式
+
+		execution([权限修饰符] [返回值类型] [简单类名/全类名] [方法名]([参数列表]))
+2. 举例说明 
+
+		表达式	execution(* com.spring.aop.poxy.ArithmeticCalculator.*(..))
+		含义		ArithmeticCalculator接口中声明的所有方法。
+				第一个“*”代表任意修饰符及任意返回值。
+				第二个“*”代表任意方法。
+				“..”匹配任意数量、任意类型的参数。
+				若目标类、接口与该切面类在同一个包中可以省略包名。
+
+		表达式	execution(public * ArithmeticCalculator.*(..))
+		含义		ArithmeticCalculator接口的所有公有方法
+
+		表达式	execution(public double ArithmeticCalculator.*(..))
+		含义		ArithmeticCalculator接口中返回double类型数值的方法
+
+		表达式	execution(public double ArithmeticCalculator.*(double, ..))
+		含义		第一个参数为double类型的方法。“..” 匹配任意数量、任意类型的参数。
+
+		表达式	execution(public double ArithmeticCalculator.*(double, double))
+		含义		参数类型为double，double类型的方法
+
+		//在AspectJ中，切入点表达式可以通过 “&&”、“||”、“!”等操作符结合起来
+		表达式	execution (* *.add(int,..)) || execution(* *.sub(int,..))
+		含义		任意类中第一个参数为int类型的add方法或sub方法
+		表达式	!execution (* *.add(int,..)) 
+		含义		匹配不是任意类中第一个参数为int类型的add方法
+
+**切入点表达式应用到实际的切面类中**
+
+		@Aspect      //表示当前类是一个切面类
+		public class LoggingAspect {
+		
+			//表示当前方法是一个前置通知->应用前置通知->一组目标方法
+		    @Before("execution(public int com.spring.aop.poxy.ArithmeticCalculatorImpl.add(int,int))")//切入点表达式，指定作用到目标方法
+		    public void beforeMethod()
+		    {
+		        System.out.println("LoggingAspect==> The method is "+methodName+");
+		    }
+		}
+
+**当前连接点细节**
+
+切入点表达式通常都会是从宏观上定位一组方法，和具体某个通知的注解结合起来就能够确定对应的连接点。那么就一个具体的连接点而言，我们可能会关心这个连接点的一些具体信息，例如：当前连接点所在方法的方法名、当前传入的参数值等等。这些信息都封装在JoinPoint接口的实例对象中。
+
+**JoinPoint**
+
+		 Object[] getArgs();	//获取实际参数数组
+		 Signature getSignature();		//封装签名信息的对象,可以进一步获取方法名
+
+**通知**
+
+1. 在具体的连接点上要执行的操作
+2. 一个切面可以包括一个或者多个通知
+3. 通知所使用的注解的值往往是切入点表达式。
+
+		/**
+		 * 增加一个日志切面com.spring.aop.annotation.LoggingAspect
+		 */
+		@Component  //标识为一个组件
+		@Aspect      //标识为一个切面
+		public class LoggingAspect {
+		}
+
+		/**增加标识为组件,令Spring IOC可以扫描到**/
+		@Component
+		public class ArithmeticCalculatorImpl implements ArithmeticCalculator{
+			.....
+		}
+
+	    private static void test1()
+	    {
+	        ClassPathXmlApplicationContext con = new ClassPathXmlApplicationContext("spring-aop-annotation.xml");
+	        ArithmeticCalculator bean = con.getBean("arithmeticCalculatorImpl", ArithmeticCalculator.class);
+	
+	       System.out.println(bean.getClass().getName());	//通过打印bean的Class对象,com.sun.proxy.$Proxy10,可看到是一个动态代理,JDK的动态代理接口类型必须以父接口类型定义ArithmeticCalculator,兄弟关系是不能转换的
+	        int result = bean.add(1, 2);
+	        System.out.println("mian result is "+result);
+	
+			/*
+	        int result2 = bean.div(5, 0);
+	        System.out.println("Main Result: " + result2 );
+			*/
+	    }
+
+		
+	
+**前置通知**
+
+1. 前置通知：在方法执行之前执行的通知
+2. 使用@Before注解
+
+		/**
+	     * 前置通知: 在目标方法(连接点)执行之前执行.
+	     */
+		/**当有异常时不会执行**/
+	    @Before("execution(public int com.spring.aop.poxy.ArithmeticCalculatorImpl.add(int,int))")
+	    public void beforeMethod(JoinPoint joinPoint)
+	    {
+	        //方法的名字
+	        String methodName = joinPoint.getSignature().getName();
+	        //参数
+	        Object[] paramsArray = joinPoint.getArgs();
+	
+	        System.out.println("LoggingAspect==> The method is "+methodName+",params is "+ Arrays.asList(paramsArray));
+			/*
+			LoggingAspect==> The method is add,params is [1, 2]
+			Main result is 3
+			*/
+	    }
+
+**后置通知**
+
+1. 后置通知是在连接点完成之后执行的，即连接点返回结果或者抛出异常的时候
+2. 使用@After注解
+
+		 /**
+	     * 后置通知: 在目标方法执行之后执行， 不管目标方法有没有抛出异常.  不能获取方法的结果
+	     *    * com.atguigu.spring.aspectJ.annotation.*.*(..)
+	     *    * : 任意修饰符 任意返回值
+	     *    * : 任意类
+	     *    * : 任意方法
+	     *    ..: 任意参数列表
+	     *
+	     * 连接点对象: JoinPoint
+	     */
+	    @After("execution(* com.spring.aop.poxy.*.*(..))")
+	    public void afterMethod(JoinPoint joinPoint)
+	    {
+	        //方法的名字
+	        String methodName = joinPoint.getSignature().getName();
+	        System.out.println("LoggingAspect==> The method "+methodName+" is endding");
+
+			/*
+				LoggingAspect==> The method is add,params is [1, 2]
+				LoggingAspect==> The method add is endding
+				Main result is 3
+			
+			*/
+	    }
+
+**返回通知**
+
+1. 无论连接点是正常返回还是抛出异常，后置通知都会执行。如果只想在连接点返回的时候记录日志，应使用返回通知代替后置通知
+2. 使用@AfterReturning注解,在返回通知中访问连接点的返回值
+	1. 在返回通知中，只要将returning属性添加到@AfterReturning注解中，就可以访问连接点的返回值。该属性的值即为用来传入返回值的参数名称
+	2. 必须在通知方法的签名中添加一个同名参数。在运行时Spring AOP会通过这个参数传递返回值
+	3. 原始的切点表达式需要出现在pointcut属性中
+
+			 /**
+		     * 返回通知: 在目标方法正常执行结束后执行.  可以获取到方法的返回值.
+		     *
+		     * 获取方法的返回值: 通过returning 来指定一个名字， 必须要与方法的一个形参名一致.
+		     */
+			/**当有异常时不会执行**/
+		    @AfterReturning(value = "execution(* com.spring.aop.poxy.*.*(..))",returning = "result")
+		    public void afterReturningMethod(JoinPoint joinPoint,Object result)
+		    {
+		        //方法的名字
+		        String methodName = joinPoint.getSignature().getName();
+		        System.out.println("LoggingAspect==> The method "+methodName+" is afterReturningMethod,return result is "+result);
+
+				/**
+				LoggingAspect==> The method is add,params is [1, 2]
+				LoggingAspect==> The method add is endding
+				LoggingAspect==> The method add is afterReturningMethod,return result is 3
+				Main result is 3
+				**/
+		    }
+
+**异常通知**
+
+1. 只在连接点抛出异常时才执行异常通知
+2. 将throwing属性添加到@AfterThrowing注解中，也可以访问连接点抛出的异常。Throwable是所有错误和异常类的顶级父类，所以在异常通知方法可以捕获到任何错误和异常。
+3. 如果只对某种特殊的异常类型感兴趣，可以将参数声明为其他异常的参数类型。然后通知就只在抛出这个类型及其子类的异常时才被执行
+
+    	/**
+	     * 异常通知: 在目标方法抛出异常后执行.
+	     *
+	     * 获取方法的异常: 通过throwing来指定一个名字， 必须要与方法的一个形参名一致.
+	     *
+	     * 可以通过形参中异常的类型 来设置抛出指定异常才会执行异常通知.
+	     *
+	     */
+		/**只有发生异常时才会通知，并且指定的形参的异常类型包含且属于错误异常**/
+	    @AfterThrowing(value = "execution(* com.spring.aop.poxy.*.*(..))",throwing = "ex")
+	    public void afterThrowingMethod(JoinPoint joinPoint, Exception ex)
+	    {
+	        String methodName = joinPoint.getSignature().getName();
+	        System.out.println("LoggingAspect==> The method "+methodName+" is afterThrowingMethod,throw exception is "+ex);
+			/*
+			LoggingAspect==> The method div is endding
+			LoggingAspect==> The method div is afterThrowingMethod,throw exception is java.lang.ArithmeticException: / by zero
+			*/
+	    }
+			
+**环绕通知**
+
+1. 环绕通知是所有通知类型中功能最为强大的，能够全面地控制连接点，甚至可以控制是否执行连接点
+2. 对于环绕通知来说，连接点的参数类型必须是ProceedingJoinPoint。它是 JoinPoint的子接口，允许控制何时执行，是否执行连接点
+3. 在环绕通知中需要明确调用ProceedingJoinPoint的proceed()方法来执行被代理的方法。如果忘记这样做就会导致通知被执行了，但目标方法没有被执行
+4. 注意：环绕通知的方法需要返回目标方法执行之后的结果，即调用 joinPoint.proceed();的返回值，否则会出现空指针异常
+
+	    /**
+	     * 环绕通知: 环绕着目标方法执行. 可以理解是 前置 后置 返回  异常 通知的结合体，更像是动态代理的整个过程.
+	     */
+	    @Around("execution(* com.spring.aop.poxy.*.*(..))")
+	    public Object roundMethod(ProceedingJoinPoint pjp)
+	    {
+	        //执行目标方法
+	        try {
+	            //前置
+	            String name = pjp.getSignature().getName();
+	            System.out.println("round before is "+name);
+	
+	            //返回
+	            Object result = pjp.proceed();
+	            System.out.println("round return is "+ result);
+	            return result;
+	        }catch (Throwable e){
+	            //异常通知
+	            e.printStackTrace();
+	        }finally {
+	            // 后置
+	            System.out.println("round endding!");
+	        }
+	        return null;
+
+			/**
+			round before is add
+			LoggingAspect==> The method is add,params is [1, 2]
+			round return is 3
+			round endding!
+			LoggingAspect==> The method add is endding
+			LoggingAspect==> The method add is afterReturningMethod,return result is 3
+			**/
+	    }
+
+**重用切入点定义**
+
+1. 在编写AspectJ切面时，可以直接在通知注解中书写切入点表达式。但同一个切点表达式可能会在多个通知中重复出现
+2. 在AspectJ切面中，可以通过@Pointcut注解将一个切入点声明成简单的方法。切入点的方法体通常是空的，因为将切入点定义与应用程序逻辑混在一起是不合理的
+3. 切入点方法的访问控制符同时也控制着这个切入点的可见性。如果切入点要在多个切面中共用，最好将它们集中在一个公共的类中。在这种情况下，它们必须被声明为public。在引入这个切入点时，必须将类名也包括在内。如果类没有与这个切面放在同一个包中，还必须包含包名
+4. 其他通知可以通过方法名称引入该切入点
+
+		/**
+		 * 声明切入点表达式
+		 */
+		 @Pointcut("execution(* com.spring.aop.poxy.*.*(..))")
+	    public void declarePointCut(){}
+
+		原有的@After("execution(* com.spring.aop.poxy.*.*(..))")
+		替换成@After("declarePointCut()")
+
+		原有的//@AfterReturning(value = "execution(* com.spring.aop.poxy.*.*(..))",returning = "result")
+		替换成@AfterReturning(value = "declarePointCut()", returning = "result")
+
+		//在ValidationAspect类使用时
+		原有的//@Before("execution(* com.spring.aop.poxy.*.*(..))")
+		@Before("LoggingAspect.declarePointCut()")
+
+**指定切面的优先级**
+
+1. 在同一个连接点上应用不止一个切面时，除非明确指定，否则它们的优先级是不确定的
+2. 切面的优先级可以通过实现Ordered接口或利用@Order注解指定
+3. 实现Ordered接口，getOrder()方法的返回值越小，优先级越高
+4. 若使用@Order注解，序号出现在注解中
+
+		/**
+		 * 验证切面
+		 *
+		 */
+		@Component
+		@Aspect
+		@Order(1)	//设置切面的优先级,默认是int的最大值2147483647 
+		public class ValidationAspect {
+		
+		    @Before("execution(* com.spring.aop.poxy.*.*(..))")
+		    public void beforeMethod(JoinPoint joinPoint)
+		    {
+		        String methodName = joinPoint.getSignature().getName();
+		
+		        Object[] args = joinPoint.getArgs();
+		
+		        System.out.println("ValidationAspect==> The method "+methodName + "begin with " + Arrays.asList(args) );
+		    }
+		
+		}
+
+		
+		/**
+		 * 日志切面
+		 */
+		@Component  //标识为一个组件
+		@Aspect      //标识为一个切面
+		@Order(2)
+		public class LoggingAspect {
+			.....
+		}
+
+		//没设置@Order前的执行顺序
+		/**
+			com.sun.proxy.$Proxy11
+			round before is add
+			LoggingAspect==> The method is add,params is [1, 2]
+			ValidationAspect==> The method addbegin with [1, 2]
+		**/
+
+		//设置@Order后
+		/**
+		com.sun.proxy.$Proxy12
+		ValidationAspect==> The method addbegin with [1, 2]
+		round before is add
+		LoggingAspect==> The method is add,params is [1, 2]
+		round return is 3
+		round endding!
+		LoggingAspect==> The method add is endding
+		LoggingAspect==> The method add is afterReturningMethod,return result is 3
+		Main result is 3
+		**/
+
+# 以XML方式配置切面 #
+
+除了使用AspectJ注解声明切面，Spring也支持在bean配置文件中声明切面。这种声明是通过aop名称空间中的XML元素完成的。
+
+正常情况下，基于注解的声明要优先于基于XML的声明。通过AspectJ注解，切面可以与AspectJ兼容，而基于XML的配置则是Spring专有的。由于AspectJ得到越来越多的 AOP框架支持，所以以注解风格编写的切面将会有更多重用的机会。
+
+**配置细节**
+
+在bean配置文件中，所有的Spring AOP配置都必须定义在<aop:config>元素内部。对于每个切面而言，都要创建一个<aop:aspect>元素来为具体的切面实现引用后端bean实例。
+切面bean必须有一个标识符，供<aop:aspect>元素引用
+
+**声明切入点**
+
+1. 切入点使用<aop:pointcut>元素声明
+2. 切入点必须定义在<aop:aspect>元素下，或者直接定义在<aop:config>元素下
+	1.  定义在<aop:aspect>元素下：只对当前切面有效
+	2.  定义在<aop:config>元素下：对所有切面都有效
+3. 基于XML的AOP配置不允许在切入点表达式中用名称引用其他切入点
+
+**声明通知**
+
+1.在aop名称空间中，每种通知类型都对应一个特定的XML元素
+
+2.通知元素需要使用<pointcut-ref>来引用切入点，或用<pointcut>直接嵌入切入点表达式
+
+3.method属性指定切面类中通知方法的名称
+
+	<?xml version="1.0" encoding="UTF-8"?>
+	<beans xmlns="http://www.springframework.org/schema/beans"
+	       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	       xmlns:context="http://www.springframework.org/schema/context"
+	       xmlns:aop="http://www.springframework.org/schema/aop"
+	       xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd http://www.springframework.org/schema/context http://www.springframework.org/schema/context/spring-context-4.0.xsd http://www.springframework.org/schema/aop http://www.springframework.org/schema/aop/spring-aop-4.0.xsd">
+	
+	    <!-- 目标对象 -->
+	    <bean id="arithmeticCalculatorImpl" class="com.spring.aop.xml.ArithmeticCalculatorImpl"/>
+	
+	    <!-- 切面 -->
+	    <bean id="loggingAspect" class="com.spring.aop.xml.LoggingAspect"/>
+	    <bean id="validationAspect" class="com.spring.aop.xml.ValidationAspect"/>
+	
+	    <!-- AOP: 切面  通知  切入点表达式 -->
+	    <aop:config>
+	        <!-- 切入点表达式 -->
+	        <aop:pointcut id="myPointcut" expression="execution(* com.spring.aop.xml.*.*(..))"/>
+	
+	        <!-- 切面 -->
+	        <aop:aspect ref="loggingAspect">
+	
+	            <!-- 通知 -->
+	            <aop:before method="beforeMethod" pointcut-ref="myPointcut"/>
+	            <aop:after method="afterMethod" pointcut-ref="myPointcut"/>
+	            <aop:after-returning method="afterReturningMethod" pointcut-ref="myPointcut" returning="result"/>
+	            <aop:after-throwing method="afterThrowingMethod" pointcut-ref="myPointcut" throwing="ex"/>
+	            <aop:around method="roundMethod" pointcut-ref="myPointcut"/>
+	        </aop:aspect>
+	
+	        <aop:aspect ref="validationAspect">
+	            <aop:before method="beforeMethod" pointcut-ref="myPointcut"/>
+	        </aop:aspect>
+	    </aop:config>
+	</beans>
+
+# JdbcTemplate #
+
+为了使JDBC更加易于使用，Spring在JDBC API上定义了一个抽象层，以此建立一个JDBC存取框架。 
+
+作为Spring JDBC框架的核心，JDBC模板的设计目的是为不同类型的JDBC操作提供模板方法，通过这种方式，可以在尽可能保留灵活性的情况下，将数据库存取的工作量降到最低。 
+	
+可以将Spring的JdbcTemplate看作是一个小型的轻量级持久化层框架，和我们之前使用过的DBUtils风格非常接近。
+
+**导入JAR包**
+
+JdbcTemplate所需要的JAR包：
+
+- spring-jdbc-4.3.18.RELEASE.jar
+- spring-orm-4.3.18.RELEASE.jar
+- spring-tx-4.3.18.RELEASE.jar
+
+**在Spring配置文件中配置相关的bean**
+
+	<?xml version="1.0" encoding="UTF-8"?>
+	<beans xmlns="http://www.springframework.org/schema/beans"
+	       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	       xmlns:context="http://www.springframework.org/schema/context"
+	       xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd  http://www.springframework.org/schema/context http://www.springframework.org/schema/context/spring-context-4.0.xsd">
+	
+	    <context:property-placeholder location="classpath:config/db.properties"/>
+	
+		<!-- 数据源 -->
+	    <bean id="dataSource" class="com.mchange.v2.c3p0.ComboPooledDataSource">
+	        <property name="driverClass"  value="${jdbc.driverClass}"/>
+	        <property name="jdbcUrl" value="${jdbc.jdbcUrl}"/>
+	        <property name="user" value="${jdbc.user}"/>
+	        <property name="password" value="${jdbc.password}"/>
+	    </bean>
+	
+		<!-- JdbcTemplate -->
+	    <bean id="jdbcTemplate" class="org.springframework.jdbc.core.JdbcTemplate">
+	        <property name="dataSource" ref="dataSource" />
+	    </bean>
+	</beans>
+
+
+**持久化操作**
+
+1. 增删改	
+
+		JdbcTemplate.update(String, Object...)
+		
+		private static void test1()
+	    {
+	        ClassPathXmlApplicationContext context = new ClassPathXmlApplicationContext("spring-jdbc.xml");
+	        jdbcTemplate = context.getBean("jdbcTemplate",JdbcTemplate.class);
+	        String sql = "INSERT INTO tbl_employee (last_name,email,gender) VALUES ( ? , ? ,?)";
+	        //jdbcTemplate.update(sql,"李四","test@test.com",1);
+	        jdbcTemplate.update(sql,new Object[]{"张三","test2@test.com",2});
+	    }
+2. 批量增删改
+
+		JdbcTemplate.batchUpdate(String, List<Object[]>)
+		//Object[]封装了SQL语句每一次执行时所需要的参数
+		//List集合封装了SQL语句多次执行时的所有参数
+		
+	  	private static void test2()
+	    {
+	        ClassPathXmlApplicationContext context = new ClassPathXmlApplicationContext("spring-jdbc.xml");
+	        jdbcTemplate = context.getBean("jdbcTemplate",JdbcTemplate.class);
+	        String sql = "INSERT INTO tbl_employee (last_name,email,gender) VALUES ( ? , ? ,?)";
+	
+	        ArrayList<Object[]> list = new ArrayList<Object[]>();
+	        list.add(new Object[]{"苍老师","changlaoshi@gmail.com",2});
+	        list.add(new Object[]{"三上老师","sanshang@gmail.com",2});
+	        list.add(new Object[]{"Julia","julia@gmial.com",2});
+	        jdbcTemplate.batchUpdate(sql,list);
+	    }
+3. 查询单行
+
+		JdbcTemplate.queryForObject(String, RowMapper<Department>, Object...)
+
+		/**参数RowMapper是接口，用它的子类BeanPropertyRowMapper**/
+		 private static void test3()
+	    {
+	        ClassPathXmlApplicationContext context = new ClassPathXmlApplicationContext("spring-jdbc.xml");
+	        jdbcTemplate = context.getBean("jdbcTemplate",JdbcTemplate.class);
+	        String sql = "SELECT id,last_name,email,gender From tbl_employee Where id = ?";
+	
+	        //rowMapper: 行映射  将结果集的一条数据映射成具体的一个java对象. 
+	        RowMapper<Employee> mapper = new BeanPropertyRowMapper<Employee>(Employee.class);
+	
+	        Employee employee = jdbcTemplate.queryForObject(sql, mapper, 5);
+	        System.out.println(employee);
+	    }
+
+4. 查询多行
+
+		JdbcTemplate.query(String, RowMapper<Department>, Object...)
+		//RowMapper对象依然可以使用BeanPropertyRowMapper
+
+		 private static void test5()
+	    {
+	        ClassPathXmlApplicationContext context = new ClassPathXmlApplicationContext("spring-jdbc.xml");
+	        jdbcTemplate = context.getBean("jdbcTemplate",JdbcTemplate.class);
+	        String sql = "SELECT id,last_name,email,gender FROM tbl_employee";
+	
+	        RowMapper<Employee> rowMapper = new BeanPropertyRowMapper<Employee>(Employee.class);
+	        List<Employee> employeeList = jdbcTemplate.query(sql, rowMapper);
+	        System.out.println(employeeList);
+	    }
+5. 查询单一值
+
+		JdbcTemplate.queryForObject(String, Class, Object...)
+
+		private static void test4()
+	    {
+	        ClassPathXmlApplicationContext context = new ClassPathXmlApplicationContext("spring-jdbc.xml");
+	        jdbcTemplate = context.getBean("jdbcTemplate",JdbcTemplate.class);
+	        String sql = "SELECT COUNT(id) FROM tbl_employee";
+	
+	        Integer count = jdbcTemplate.queryForObject(sql, Integer.class);
+	        System.out.println(count);
+	    }
+
+**使用具名参数的JdbcTemplate**
+
+1. 通过IOC容器创建NamedParameterJdbcTemplate对象
+
+    <!-- NamedParameterJdbcTemplate -->
+    <bean id="namedParameterJdbcTemplate" class="org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate">
+		<!-- 没有无参构造器，必须传入数据源或JdbcTemplate对象 -->
+        <constructor-arg ref="dataSource"/>
+    </bean>
+
+2. 具名参数在SQL语句中的格式
+
+	INSERT INTO depts (dept_name) VALUES (:deptName)
+
+3. 具名参数传入
+	1. 通过Map对象传入
+		
+			 NamedParameterJdbcTemplate.update(String sql, Map<String, ?> map)
+			//Map的键是参数名，值是参数值
+
+			private static void test6()
+		    {
+		        ClassPathXmlApplicationContext context = new ClassPathXmlApplicationContext("spring-jdbc.xml");
+		        npjt = context.getBean("namedParameterJdbcTemplate", NamedParameterJdbcTemplate.class);
+		        String sql = "INSERT INTO tbl_employee (last_name,email,gender) VALUES ( :ln , :e ,:g)";
+		
+		        HashMap<String, Object> map = new HashMap<String, Object>();
+		        map.put("ln","王五");
+		        map.put("e","wangwu@test.com");
+		        map.put("g","1");
+		
+		        npjt.update(sql,map);
+		    }
+
+	2. 通过SqlParameterSource对象传入
+
+				/**SqlParameterSource参数类型是接口，使用它的子类BeanPropertySqlParameterSource**/
+			   	private static void test7()
+			    {
+			        ClassPathXmlApplicationContext context = new ClassPathXmlApplicationContext("spring-jdbc.xml");
+			        npjt = context.getBean("namedParameterJdbcTemplate", NamedParameterJdbcTemplate.class);
+			        String sql = "INSERT INTO tbl_employee (last_name,email,gender) VALUES ( :lastName , :email ,:gender)";
+			
+			        Employee employee = new Employee("赵六", "zhaoliu@test.com", 1);
+			
+			        BeanPropertySqlParameterSource parameterSource = new BeanPropertySqlParameterSource(employee);
+			
+			        npjt.update(sql,parameterSource);
+			    }
+
+**使用JdbcTemplate实现Dao**
+
+通过IOC容器自动注入
+
+**JdbcTemplate类是线程安全的**，所以可以在IOC容器中声明它的单个实例，并将这个实例注入到所有的Dao实例中
+
+	@Repository
+	public class EmployeeDao {
+	
+	    @Autowired
+	    private  JdbcTemplate jdbcTemplate;
+	
+	    @Autowired
+	    private  NamedParameterJdbcTemplate npjt;
+	
+	    public void insertEmployee(Employee employee)
+	    {
+	        String sql = "INSERT INTO tbl_employee (last_name,email,gender) VALUES ( :lastName , :email ,:gender)";
+	        BeanPropertySqlParameterSource parameterSource = new BeanPropertySqlParameterSource(employee);
+	        npjt.update(sql,parameterSource);
+	    }
+	}
+
+# 声明式事务管理 #
+
+**事务概述**
+
+1. 在JavaEE企业级开发的应用领域，为了保证数据的**完整性** 和 **一致性** ，必须引入数据库事务的概念，所以事务管理是企业级应用程序开发中必不可少的技术
+2. 事务就是一组由于逻辑上紧密关联而合并成一个整体(工作单元)的多个数据库操作，这些操作 **要么都执行，要么都不执行**
+3. 事务的四个关键属性(ACID)
+	1. **原子性**(atomicity)：“原子”的本意是“**不可再分**”，事务的原子性表现为一个事务中涉及到的多个操作在逻辑上缺一不可。事务的原子性要求事务中的所有操作要么都执行，要么都不执行
+	2. **一致性**(consistency)：“一致”指的是数据的一致，具体是指：所有数据都处于**满足业务规则的一致性状态**。一致性原则要求：一个事务中不管涉及到多少个操作，都必须保证事务执行之前数据是正确的，事务执行之后数据仍然是正确的。如果一个事务在执行的过程中，其中某一个或某几个操作失败了，则必须将其他所有操作撤销，将数据恢复到事务执行之前的状态，这就是回滚。
+	3. **隔离性**(isolation)：在应用程序实际运行过程中，事务往往是并发执行的，所以很有可能有许多事务同时处理相同的数据，因此每个事务都应该与其他事务隔离开来，防止数据损坏。隔离性原则要求多个事务在**并发执行过程中不会互相干扰**
+	4. **持久性**(durability)：持久性原则要求事务执行完成后，对数据的修改**永久的保存**下来，不会因各种系统错误或其他意外情况而受到影响。通常情况下，事务对数据的修改应该被写入到持久化存储器中
+
+spring-tx.xml
+
+		<?xml version="1.0" encoding="UTF-8"?>
+		<beans xmlns="http://www.springframework.org/schema/beans"
+		       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+		       xmlns:context="http://www.springframework.org/schema/context"
+		       xmlns:tx="http://www.springframework.org/schema/tx"
+		       xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd  http://www.springframework.org/schema/context http://www.springframework.org/schema/context/spring-context-4.0.xsd http://www.springframework.org/schema/tx http://www.springframework.org/schema/tx/spring-tx-4.0.xsd">
+		
+		    <context:property-placeholder location="classpath:config/db.properties"/>
+		
+		    <context:component-scan base-package="com.spring.tx"/>
+		
+		    <!-- 数据源 -->
+		    <bean id="dataSource" class="com.mchange.v2.c3p0.ComboPooledDataSource">
+		        <property name="driverClass"  value="${jdbc.driverClass}"/>
+		        <property name="jdbcUrl" value="${jdbc.jdbcUrl}"/>
+		        <property name="user" value="${jdbc.user}"/>
+		        <property name="password" value="${jdbc.password}"/>
+		    </bean>
+		
+		    <!-- JdbcTemplate -->
+		    <bean id="jdbcTemplate" class="org.springframework.jdbc.core.JdbcTemplate">
+		        <property name="dataSource" ref="dataSource" />
+		    </bean>
+		
+		    <!-- NamedParameterJdbcTemplate -->
+		    <bean id="namedParameterJdbcTemplate" class="org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate">
+		        <!-- 没有无参构造器，必须传入数据源或JdbcTemplate对象 -->
+		        <constructor-arg ref="dataSource"/>
+		    </bean>
+		
+		    <!-- 事务管理器 -->
+		    <bean id="dataSourceTransactionManager" class="org.springframework.jdbc.datasource.DataSourceTransactionManager">
+		        <property name="dataSource" ref="dataSource"/>
+		    </bean>
+		
+		    <!-- 开启事务注解
+				transaction-manager 用来指定事务管理器， 如果事务管理器的id值 是 transactionManager，
+				                                               可以省略不进行指定。
+			-->
+		    <tx:annotation-driven transaction-manager="dataSourceTransactionManager"/>
+		</beans>
+
+Dao
+
+		public interface BookShopDao {
+		
+		    //根据书号查询书的价格
+		    public int findPriceByIsbn(String isbn );
+		
+		    //更新书的库存
+		
+		    public void  updateStock(String isbn);
+		
+		    //更新用户的余额
+		
+		    public void  updateUserAccount(String username,Integer price);
+		}
+
+		@Repository
+		public class BookShopDaoImpl implements BookShopDao {
+		
+		    @Autowired
+		    private JdbcTemplate jdbcTemplate;
+		
+		    @Override
+		    public int findPriceByIsbn(String isbn) {
+		        String sql =" SELECT price FROM book WHERE isbn = ?";
+		        Integer price = jdbcTemplate.queryForObject(sql, Integer.class, isbn);
+		        return price;
+		    }
+		
+		    @Override
+		    public void updateStock(String isbn) {
+		
+		        //判断库存是否足够
+		        String sql = "SELECT stock FROM book_stock WHERE isbn = ?";
+		        Integer stock = jdbcTemplate.queryForObject(sql, Integer.class, isbn);
+		        if (stock <= 0)
+		        {
+		            throw new BookStockException("库存不足.....");
+		        }
+		
+		        String updateSql = "UPDATE book_stock SET stock = stock -1 WHERE isbn = ?";
+		        jdbcTemplate.update(updateSql,isbn);
+		    }
+		
+		    @Override
+		    public void updateUserAccount(String username, Integer price) {
+		        //判断余额是否足够
+		        String sql ="SELECT balance FROM account WHERE username = ?";
+		        Integer balance = jdbcTemplate.queryForObject(sql, Integer.class, username);
+		
+		        if (balance < price)
+		        {
+		            throw new UserAccountException("余额不足......");
+		        }
+		        String updateSql = "UPDATE account SET balance = balance - ? WHERE username = ?";
+		        jdbcTemplate.update(updateSql,price,username);
+		    }
+		}
+
+Service
+
+		public interface BookShopService {
+		    public void buyBook(String username,String isbn);
+		}
+
+		@Transactional       //对当前类中所有的方法都起作用
+		@Service
+		public class BookShopServiceImpl implements BookShopService{
+		
+		    @Autowired
+		    private BookShopDao bookShopDao;
+		
+		
+		    @Override
+		    //@Transactional      //只对当前的方法起作用
+		    public void buyBook(String username, String isbn) {
+		        int price = bookShopDao.findPriceByIsbn(isbn);
+		        bookShopDao.updateStock(isbn);
+		        bookShopDao.updateUserAccount(username,price);
+		    }
+		}
+
+Main
+
+		//当加了@Transactional注解后，通过@Service查找会变成代理模式进行AOP
+		//反之打印只是一个bookShopServiceImpl bean类型
+	  	 private static void test1()
+	    {
+	        ClassPathXmlApplicationContext context = new ClassPathXmlApplicationContext("spring-tx.xml");
+	        BookShopService bean = context.getBean("bookShopServiceImpl", BookShopService.class);
+	        System.out.println(bean.getClass().getName());		//com.sun.proxy.$Proxy14
+	        bean.buyBook("Tom","1001");
+	    }
+
+**事务的传播行为**
+
+当事务方法被另一个事务方法调用时，必须指定事务应该如何传播。例如：方法可能继续在现有事务中运行，也可能开启一个新事务，并在自己的事务中运行。
+
+事务的传播行为可以由传播属性指定。Spring定义了7种类传播行为
+
+	REQUIRED		//如果有事务在运行，当前的方法就在这个事务内运行，否则，就启动一个新的事务，并在自己的事务内运行
+	REQUIRED_NEW	//当前的方法必须启动新事务,并在它自己的事务内运行.如果有事务正在运行,应该将它挂起
+	SUPPORTS		//如果有事务在运行,当前的方法就在这个事务内运行.否则它可以不运行在事务中
+	NOT_SUPPORTE	//当前的方法不应该运行在事务中,如果有运行的事务,将它挂起
+	MANDATORY		//当前的方法必须运行在事务内部,如果没有正在运行的事务,就抛出异常
+	NEVER			//当前的方法不应该运行在事务中,如果有运行的事务,就抛出异常
+	NESTED			//如果有事务在运行,当前的方法就应该在这个事务的嵌套事务内运行.否则,就启动一个新的事务,并在它自己的事务内运行
+
+事务传播属性可以在@Transactional注解的propagation属性中定义。
+
+测试
+
+	public interface Cashier {
+
+	    public void purchase(String username, List<String> isbns);
+	}
+
+	@Service
+	public class CashierImpl implements Cashier{
+	
+	    @Autowired
+	    private BookShopService bookShopService;
+	
+	    @Override
+	    @Transactional
+	    public void purchase(String username, List<String> isbns) {
+	
+	        for (String isbn : isbns)
+	        {
+	            bookShopService.buyBook(username,isbn);
+	        }
+	    }
+	}
+
+
+
+1. REQUIRED传播行为
+
+	当bookService的purchase()方法被另一个事务方法checkout()调用时，它默认会在现有的事务内运行。这个默认的传播行为就是REQUIRED。因此在checkout()方法的开始和终止边界内只有一个事务。这个事务只在checkout()方法结束的时候被提交，结果用户一本书都买不了
+
+	![](https://github.com/DragonChilde/MarkdownPhotos/blob/master/photos/6.png)
+
+2. REQUIRES_NEW传播行为
+
+	表示该方法必须启动一个新事务，并在自己的事务内运行。如果有事务在运行，就应该先挂起它
+
+![](https://github.com/DragonChilde/MarkdownPhotos/blob/master/photos/7.png)
+
+		@Service
+		public class BookShopServiceImpl implements BookShopService{
+		
+		    @Autowired
+		    private BookShopDao bookShopDao;
+		
+		
+		    /**
+		     * 事务属性:
+		     * 	 1. 事务的传播行为 propagation: 一个事务方法被另外一个事务方法调用时，当前的事务如何使用事务.
+		     * 			Propagation.REQUIRED  默认值.  使用调用者的事务.
+		     * 			Propagation.REQUIRES_NEW     将调用者的事务挂起, 重新开启事务来使用.
+		     */
+		    @Override
+		    @Transactional(propagation = Propagation.REQUIRES_NEW)      //只对当前的方法起作用
+		    public void buyBook(String username, String isbn) {
+		        int price = bookShopDao.findPriceByIsbn(isbn);
+		        bookShopDao.updateStock(isbn);
+		        bookShopDao.updateUserAccount(username,price);
+		    }
+		}
