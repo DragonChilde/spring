@@ -2023,6 +2023,45 @@ JdbcTemplate所需要的JAR包：
 	3. **隔离性**(isolation)：在应用程序实际运行过程中，事务往往是并发执行的，所以很有可能有许多事务同时处理相同的数据，因此每个事务都应该与其他事务隔离开来，防止数据损坏。隔离性原则要求多个事务在**并发执行过程中不会互相干扰**
 	4. **持久性**(durability)：持久性原则要求事务执行完成后，对数据的修改**永久的保存**下来，不会因各种系统错误或其他意外情况而受到影响。通常情况下，事务对数据的修改应该被写入到持久化存储器中
 
+**Spring事务管理**
+
+**编程式事务管理**
+
+1. 使用原生的JDBC API进行事务管理
+	1. 获取数据库连接Connection对象
+	2. 取消事务的自动提交
+	3. 执行操作
+	4. 正常完成操作时手动提交事务
+	5. 执行失败时回滚事务
+	6. 关闭相关资源
+2. 评价
+
+使用原生的**JDBC API**实现事务管理是所有事务管理方式的基石，同时也是最典型	的编程式事务管理。编程式事务管理需要将事务管理代码**嵌入到业务方法中** 来控制事务	的提交和回滚。在使用编程的方式管理事务时，必须在每个事务操作中包含额外的事务管理代码。相对于**核心业务**而言，事务管理的代码显然属于**非核心业务** ，如果多个模块都使用同样模式的代码进行事务管理，显然会造成较大程度的**代码冗余**。
+
+**声明式事务管理**
+
+大多数情况下声明式事务比编程式事务管理更好：它将事务管理代码从业务方法中分离出来，以声明的方式来实现事务管理。
+
+事务管理代码的固定模式作为一种横切关注点，可以通过AOP方法模块化，进而借助Spring AOP框架实现声明式事务管理。
+
+Spring在不同的事务管理API之上定义了一个抽象层，通过配置的方式使其生效，从而让应用程序开发人员不必了解事务管理API的底层实现细节，就可以使用Spring的事务管理机制。
+
+Spring既支持编程式事务管理，也支持声明式的事务管理。
+
+**Spring提供的事务管理器**
+
+Spring从不同的事务管理API中抽象出了一整套事务管理机制，让事务管理代码从特定的事务技术中独立出来。开发人员通过配置的方式进行事务管理，而不必了解其底层是如何实现的。
+
+Spring的核心事务管理抽象是PlatformTransactionManager。它为事务管理封装了一组独立于技术的方法。无论使用Spring的哪种事务管理策略(编程式或声明式)，事务管理器都是必须的。
+
+事务管理器可以以普通的bean的形式声明在Spring IOC容器中。
+
+**事务管理器的主要实现**
+
+1. DataSourceTransactionManager：在应用程序中只需要处理一个数据源，而且通过JDBC存取。
+2. JtaTransactionManager：在JavaEE应用服务器上用JTA(Java Transaction API)进行事务管理
+3. HibernateTransactionManager：用Hibernate框架存取数据库
+
 spring-tx.xml
 
 		<?xml version="1.0" encoding="UTF-8"?>
@@ -2239,28 +2278,175 @@ Main
 
 **事务的隔离级别isolation**
 
-	//数据库的隔离级别(等级越高,效率越低)
-	 *   		1    读未提交      	脏读
-	 *   		2    读已提交      	不可重复读
-	 *    		4    可重复读      	幻读
-	 *    		8    串行化(排队)    效率低。
-
 **数据库事务并发问题**
 
 假设现在有两个事务：Transaction01和Transaction02并发执行
 
-1. 脏读
+1. 脏读(可重复读)
 	1. Transaction01将某条记录的AGE值从20修改为30
 	2. ransaction02读取了Transaction01更新后的值：30。
 	3. Transaction01回滚，AGE值恢复到了20。
 	4. Transaction02读取到的30就是一个无效的值
 
-2. 不可重复读
+2. 不可重复读(针对update操作)
 	1. Transaction01读取了AGE值为20。
 	2. Transaction02将AGE值修改为30。
 	3. Transaction01再次读取AGE值为30，和第一次读取不一致。
 
-3. 幻读
+3. 幻读(针对add操作)
 	1. Transaction01读取了STUDENT表中的一部分数据。
 	2. Transaction02向STUDENT表中插入了新的行。
 	3. Transaction01读取了STUDENT表时，多出了一些行
+
+
+**隔离级别**
+
+数据库系统必须具有隔离并发运行各个事务的能力，使它们不会相互影响，避免各种并发问题。**一个事务与其他事务隔离的程度称为隔离级别**。SQL标准中规定了多种事务隔离级别，不同隔离级别对应不同的干扰程度，隔离级别越高，数据一致性就越好，但并发性越弱
+
+1. **读未提交(脏读)**：READ UNCOMMITTED
+
+	允许Transaction01读取Transaction02未提交的修改
+2. **读已提交(不可重复读)(常用)**：READ COMMITTED
+
+	 要求Transaction01只能读取Transaction02已提交的修改
+3. **可重复读(幻读)(MYSQL默认)**：REPEATABLE READ
+
+	确保Transaction01可以多次从一个字段中读取到相同的值，即Transaction01执行期间禁止其它事务对这个字段进行更新
+4. **串行化(效率低)(排队)**：SERIALIZABLE
+
+	确保Transaction01可以多次从一个表中读取到相同的行，在Transaction01执行期间，禁止其它事务对这个表进行添加、更新、删除操作。可以避免任何并发问题，但性能十分低下
+5. 各个隔离级别解决并发问题的能力见下表
+
+							脏读		不可重复读	幻读
+		READ UNCOMMITTED	有		有			有
+		READ COMMITTED		无		有			有
+		REPEATABLE READ		无		无			有
+		SERIALIZABLE		无		无			无
+6. 各种数据库产品对事务隔离级别的支持程度
+
+							Oracle		MySQL
+		READ UNCOMMITTED		×		√
+		READ COMMITTED			√(默认)	√
+		REPEATABLE READ			×		√(默认)
+		SERIALIZABLE			√		√
+
+**在Spring中指定事务隔离级别**
+
+1.**注解**
+
+用@Transactional注解声明式地管理事务时可以在@Transactional的isolation属性中设置隔离级别
+
+	@Transactional(propagation = Propagation.REQUIRES_NEW,isolation = Isolation.READ_COMMITTED) 
+    public void buyBook(String username, String isbn) {
+		.....
+    }
+
+**触发事务回滚的异常**
+
+**默认情况**
+
+捕获到RuntimeException或Error时回滚，而捕获到编译时异常不回滚
+
+**设置途经**
+
+1. 注解@Transactional注解
+	1. rollbackFor属性(class类型)：指定遇到时必须进行回滚的异常类型，可以为多个
+	2. noRollbackFor属性(class类型)：指定遇到时不回滚的异常类型，可以为多个
+
+		    @Transactional(propagation = Propagation.REQUIRES_NEW,isolation = Isolation.READ_COMMITTED,noRollbackFor = {UserAccountException.class})     
+		    public void buyBook(String username, String isbn) {
+				....
+		    }
+
+**事务的超时和只读属性**
+
+由于事务可以在行和表上获得锁，因此长事务会占用资源，并对整体性能产生影响。
+
+如果一个事务只读取数据但不做修改，数据库引擎可以对这个事务进行优化。
+
+- 超时事务属性：事务在强制回滚之前可以保持多久。这样可以防止长期运行的事务占用资源。
+- 只读事务属性: 表示这个事务只读取数据但不更新数据, 这样可以帮助数据库引擎优化事务。
+
+事务的只读设置:
+
+	readOnly
+		true:  只读     代表着只会对数据库进行读取操作， 不会有修改的操作.
+		如果确保当前的事务只有读取操作，就有必要设置为只读，可以帮助数据库引擎优化事务
+	
+		false: 非只读   不仅会读取数据还会有修改操作。
+
+事务的超时设置:  设置事务在强制回滚之前可以占用的时间.
+
+	timeout:
+
+1. 注解
+
+		@Transactional(propagation = Propagation.REQUIRES_NEW,isolation = Isolation.READ_COMMITTED,noRollbackFor = {UserAccountException.class},readOnly = false,timeout = 3)
+	    public void buyBook(String username, String isbn) {
+			...
+	    }
+
+**XML方式**
+
+	<?xml version="1.0" encoding="UTF-8"?>
+	<beans xmlns="http://www.springframework.org/schema/beans"
+	       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	       xmlns:context="http://www.springframework.org/schema/context"
+	       xmlns:tx="http://www.springframework.org/schema/tx"
+	       xmlns:aop="http://www.springframework.org/schema/aop"
+	       xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd  http://www.springframework.org/schema/context http://www.springframework.org/schema/context/spring-context-4.0.xsd http://www.springframework.org/schema/tx http://www.springframework.org/schema/tx/spring-tx-4.0.xsd http://www.springframework.org/schema/aop http://www.springframework.org/schema/aop/spring-aop-4.0.xsd">
+	
+	    <context:property-placeholder location="classpath:config/db.properties"/>
+	
+	    <context:component-scan base-package="com.spring.tx.xml"/>
+	
+	    <!-- 数据源 -->
+	    <bean id="dataSource" class="com.mchange.v2.c3p0.ComboPooledDataSource">
+	        <property name="driverClass"  value="${jdbc.driverClass}"/>
+	        <property name="jdbcUrl" value="${jdbc.jdbcUrl}"/>
+	        <property name="user" value="${jdbc.user}"/>
+	        <property name="password" value="${jdbc.password}"/>
+	    </bean>
+	
+	    <!-- JdbcTemplate -->
+	    <bean id="jdbcTemplate" class="org.springframework.jdbc.core.JdbcTemplate">
+	        <property name="dataSource" ref="dataSource" />
+	    </bean>
+	
+	    <!-- NamedParameterJdbcTemplate -->
+	    <bean id="namedParameterJdbcTemplate" class="org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate">
+	        <!-- 没有无参构造器，必须传入数据源或JdbcTemplate对象 -->
+	        <constructor-arg ref="dataSource"/>
+	    </bean>
+	
+	    <!-- 事务管理器 -->
+	    <bean id="dataSourceTransactionManager" class="org.springframework.jdbc.datasource.DataSourceTransactionManager">
+	        <property name="dataSource" ref="dataSource"/>
+	    </bean>
+	
+	    <!-- 基于xml配置事务管理    事务管理器   事务属性设置 -->
+	    <tx:advice transaction-manager="dataSourceTransactionManager" id="txAdvice">
+	        <!-- 配置事务属性 -->
+	        <tx:attributes>
+	            <!-- 具体的方法使用的事务属性 -->
+	            <tx:method name="buyBook" isolation="READ_COMMITTED" propagation="REQUIRES_NEW" read-only="false" rollback-for="UserAccountException"/>
+	            <tx:method name="purchase"/>
+	
+	            <!-- 约定方法的名字 -->
+	            <!-- 查询操作: selectxxx  selectEmployee  selectUser -->
+	            <tx:method name="select*" read-only="true"/>
+	            <!-- 修改操作: updatexxx -->
+	            <tx:method name="update*" />
+	
+	            <!-- 除了上述指定的方法之外的所有方法 -->
+	            <tx:method name="*"/>
+	        </tx:attributes>
+	    </tx:advice>
+	
+	    <aop:config>
+	        <!-- 切入点表达式 -->
+	        <aop:pointcut id="txPointCut" expression="execution(* com.spring.tx.xml.server.*.*(..))"/>
+	        <!-- 切入点表达式  与 事务配置的结合(不配置事务是不会生效的) -->
+	        <aop:advisor advice-ref="txAdvice" pointcut-ref="txPointCut"/>
+	    </aop:config>
+	</beans>

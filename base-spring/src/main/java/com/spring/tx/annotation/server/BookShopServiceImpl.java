@@ -1,8 +1,10 @@
 package com.spring.tx.annotation.server;
 
 import com.spring.tx.annotation.dao.BookShopDao;
+import com.spring.tx.annotation.exception.UserAccountException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Isolation;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -44,7 +46,7 @@ public class BookShopServiceImpl implements BookShopService{
      *
      */
     @Override
-    @Transactional(propagation = Propagation.REQUIRES_NEW)      //只对当前的方法起作用
+    @Transactional(propagation = Propagation.REQUIRES_NEW,isolation = Isolation.READ_COMMITTED,noRollbackFor = {UserAccountException.class},readOnly = false,timeout = 3)      //只对当前的方法起作用
     public void buyBook(String username, String isbn) {
         int price = bookShopDao.findPriceByIsbn(isbn);
         bookShopDao.updateStock(isbn);
