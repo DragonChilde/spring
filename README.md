@@ -2317,7 +2317,7 @@ Main
 	确保Transaction01可以多次从一个表中读取到相同的行，在Transaction01执行期间，禁止其它事务对这个表进行添加、更新、删除操作。可以避免任何并发问题，但性能十分低下
 5. 各个隔离级别解决并发问题的能力见下表
 
-							脏读		不可重复读	幻读
+							脏读		不可重复读		幻读
 		READ UNCOMMITTED			有		有			有
 		READ COMMITTED				无		有			有
 		REPEATABLE READ			无		无			有
