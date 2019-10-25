@@ -2318,10 +2318,10 @@ Main
 5. 各个隔离级别解决并发问题的能力见下表
 
 							脏读		不可重复读	幻读
-		READ UNCOMMITTED	有		有			有
-		READ COMMITTED		无		有			有
+		READ UNCOMMITTED			有		有			有
+		READ COMMITTED				无		有			有
 		REPEATABLE READ		无		无			有
-		SERIALIZABLE		无		无			无
+		SERIALIZABLE				无		无			无
 6. 各种数据库产品对事务隔离级别的支持程度
 
 							Oracle		MySQL
