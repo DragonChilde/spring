@@ -2326,8 +2326,8 @@ Main
 
 							Oracle		MySQL
 		READ UNCOMMITTED			×		√
-		READ COMMITTED				√(默认)	√
-		REPEATABLE READ				×		√(默认)
+		READ COMMITTED				√(默认)		√
+		REPEATABLE READ			×		√(默认)
 		SERIALIZABLE				√		√
 
 **在Spring中指定事务隔离级别**
