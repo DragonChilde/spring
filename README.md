@@ -2325,9 +2325,9 @@ Main
 6. 各种数据库产品对事务隔离级别的支持程度
 
 							Oracle		MySQL
-		READ UNCOMMITTED		×		√
+		READ UNCOMMITTED			×		√
 		READ COMMITTED			√(默认)	√
-		REPEATABLE READ			×		√(默认)
+		REPEATABLE READ				×		√(默认)
 		SERIALIZABLE			√		√
 
 **在Spring中指定事务隔离级别**
@@ -2386,7 +2386,7 @@ Main
 			...
 	    }
 
-**XML方式**
+**Spring事务的XML方式**
 
 	<?xml version="1.0" encoding="UTF-8"?>
 	<beans xmlns="http://www.springframework.org/schema/beans"
