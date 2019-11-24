@@ -1,6 +1,8 @@
-# Spring #
+[Spring](http://120.77.237.175:9080/photos/spring/)
 
-**搭建Spring运行时的基础环境**
+# 搭建Spring运行时的基础环境 #
+
+## Pom ##
 
 	<?xml version="1.0" encoding="UTF-8"?>
 	<project xmlns="http://maven.apache.org/POM/4.0.0"
@@ -46,7 +48,7 @@
 	    </dependencies>
 	</project>
 
-创建一个Person类
+## 创建一个Person类 ##
 
 	public class Person {
 	
@@ -73,7 +75,7 @@
 	    }
 	}
 
-创建一个spring配置文件名为applicationContext.xml
+## 创建一个spring配置文件名为applicationContext.xml ##
 
 	<?xml version="1.0" encoding="UTF-8"?>
 	<beans xmlns="http://www.springframework.org/schema/beans"
@@ -96,7 +98,7 @@
 	    </bean>
 	</beans>
 
-创建Main启动类
+## 创建Main启动类 ##
 
 	public class Main {
 	    public static void main(String[] args) {
@@ -112,23 +114,23 @@
 	}
 
 
-#IOC容器和Bean的配置#
+# IOC容器和Bean的配置 #
 
-**IOC和DI**
+## IOC和DI ##
 
-**IOC(Inversion of Control)：反转控制**
+### IOC(Inversion of Control)：反转控制 ###
 
 在应用程序中的组件需要获取资源时，传统的方式是组件主动的从容器中获取所需要的资源，在这样的模式下开发人员往往需要知道在具体容器中特定资源的获取方式，增加了学习成本，同时降低了开发效率。
 反转控制的思想完全颠覆了应用程序组件获取资源的传统方式：反转了资源的获取方向——改由容器主动的将资源推送给需要的组件，开发人员不需要知道容器是如何创建资源对象的，只需要提供接收资源的方式即可，极大的降低了学习成本，提高了开发的效率。这种行为也称为查找的被动形式。
 
 
-**DI(Dependency Injection)：依赖注入**
+### DI(Dependency Injection)：依赖注入 ###
 
 IOC的另一种表述方式：即组件以一些预先定义好的方式(例如：setter 方法)接受来自于容器的资源注入。相对于IOC而言，这种表述更直接。
 
 IOC 描述的是一种思想，而DI 是对IOC思想的具体实现.
 
-**IOC容器在Spring中的实现**
+### IOC容器在Spring中的实现 ###
 
 
 - 在通过IOC容器读取Bean的实例之前，需要先将IOC容器本身实例化。
@@ -136,23 +138,23 @@ IOC 描述的是一种思想，而DI 是对IOC思想的具体实现.
 	1. BeanFactory：IOC容器的基本实现，是Spring内部的基础设施，是面向Spring本身的，不是提供给开发人员使用的。
 	2. ApplicationContext：BeanFactory的子接口，提供了更多高级特性。面向Spring的使用者，几乎所有场合都使用ApplicationContext而不是底层的BeanFactor
 
-![](https://images2018.cnblogs.com/blog/1362278/201807/1362278-20180709153041698-778938050.png)
+![](http://120.77.237.175:9080/photos/spring/01.png)
 
--  **ApplicationContext的主要实现类**
-	1. ClassPathXmlApplicationContext：对应类路径下的XML格式的配置文件
-	2. FileSystemXmlApplicationContext：对应文件系统中的XML格式的配置文件
-	3. 在初始化时就创建单例的bean，也可以通过配置的方式指定创建的Bean是多实例的。
+### ApplicationContext的主要实现类 ###
+1. ClassPathXmlApplicationContext：对应类路径下的XML格式的配置文件
+2. FileSystemXmlApplicationContext：对应文件系统中的XML格式的配置文件
+3. 在初始化时就创建单例的bean，也可以通过配置的方式指定创建的Bean是多实例的。
 
--  **ConfigurableApplicationContext**
-	1. 是ApplicationContext的子接口，包含一些扩展方法
-	2. refresh()和close()让ApplicationContext具有启动、关闭和刷新上下文的能力。
+### ConfigurableApplicationContext ###
+1. 是ApplicationContext的子接口，包含一些扩展方法
+2. refresh()和close()让ApplicationContext具有启动、关闭和刷新上下文的能力。
 
-- **WebApplicationContext**
+### WebApplicationContext ###
 
-	专门为WEB应用而准备的，它允许从相对于WEB根目录的路径中完成初始化工
+专门为WEB应用而准备的，它允许从相对于WEB根目录的路径中完成初始化工
 
 
-**通过类型获取bean**
+## 通过类型获取bean ##
 
 1. 从IOC容器中获取bean时，除了通过id值获取，还可以通过bean的类型获取。但如果同一个类型的bean在XML文件中配置了多个，则获取时会抛出异常，所以同一个类型的bean在容器中必须是唯一的
 
@@ -164,7 +166,7 @@ IOC 描述的是一种思想，而DI 是对IOC思想的具体实现.
 
 **注意:getBean是由接口BeanFactory定义的方法**
 
-Main类
+**Main类**
 
 	public class Main {
 	    public static void main(String[] args) {
@@ -184,7 +186,7 @@ Main类
 	    }
 	}
 
-applicationContext.xml
+**applicationContext.xml**
 
 	<?xml version="1.0" encoding="UTF-8"?>
 	<beans xmlns="http://www.springframework.org/schema/beans"
@@ -201,9 +203,9 @@ applicationContext.xml
 	    </bean>
 	</beans>
 
-**给bean的属性赋值**
+## 给bean的属性赋值 ##
 
-依赖注入的方式
+### 依赖注入的方式 ###
 
 1. 通过bean的setXxx()方法赋值
 
@@ -288,7 +290,7 @@ applicationContext.xml
 				*/
 		    }
 
-**p名称空间**
+### p名称空间 ###
 
 为了简化XML文件的配置，越来越多的XML文件采用属性而非子元素配置信息。Spring从2.5版本开始引入了一个新的p命名空间，可以通过<bean>元素属性的方式配置Bean的属性。
 使用p命名空间后，基于XML的配置方式将进一步简化。
@@ -299,7 +301,7 @@ applicationContext.xml
 		//只需把Car类的setXXX(XXX)方法设置好，需要赋值的写在bean标签里,p标签也是通过类的set方法进行赋值(与标签<property>的使用一样)
 		<bean id="car3" class="com.spring.di.bean.Car" p:brand="本田" p:crop="东本" p:price="200000" p:speed="200"/>
 
-**可以使用的值**
+### 可以使用的值 ###
 
 **1. 字面量**
 
@@ -376,13 +378,13 @@ applicationContext.xml
         </property>
     </bean>
 
-**集合属性**
+## 集合属性 ##
 
 在Spring中可以通过一组内置的XML标签来配置集合属性
 
 	例如：<list>，<set>或<map>。
 
-**1. 数组和List**
+### 数组和List ###
 
 	配置java.util.List类型的属性，需要指定<list>标签，在标签里包含一些元素。这些标签	可以通过<value>指定简单的常量值，通过<ref>指定对其他Bean的引用。通过<bean>	指定内置bean定义。通过<null/>指定空元素。甚至可以内嵌其他集合。
 	数组的定义和List一样，都使用<list>元素。
@@ -406,7 +408,7 @@ applicationContext.xml
 	/**注意这里car引用bean时speed明明没有定义，为何会打印有值，因为在级联属性赋值,已经通过指定car的speed赋值了,对于底层原理，两个引用指向同一个对象**/
 	/**PersonList{name='宇田老师', cars=[Car{brand='丰田', crop='广汽', price=200000.0, speed=100}, Car{brand='宝马', crop='华晨', price=null, speed=450000}, Car{brand='本田', crop='东本', price=200000.0, speed=200}]}**/
 
-**2. Map**
+### Map ###
 
 	Java.util.Map通过<map>标签定义，<map>标签里可以使用多个<entry>作为子标签。每个条目包含一个键和一个值。
 	必须在<key>标签里定义键。
@@ -425,7 +427,7 @@ applicationContext.xml
         </property>
     </bean>
 
-**3. 集合类型的bean**
+### 集合类型的bean ###
 
 如果只能将集合对象配置在某个bean内部，则这个集合的配置将不能重用。我们需要将集合bean的配置拿到外面，供其他bean引用。
 
@@ -445,7 +447,7 @@ applicationContext.xml
     </util:list>
 
 
-**FactoryBean**
+## FactoryBean ##
 
 Spring中有两种类型的bean，一种是普通bean，另一种是工厂bean，即FactoryBean。
 
@@ -484,9 +486,9 @@ Spring中有两种类型的bean，一种是普通bean，另一种是工厂bean�
 
 两个根本没有可比性，只是长得像而已，BeanFactory是IOC容器的顶层接口,FactoryBean是工厂方法的接口，
 
-**bean的高级配置**
+## bean的高级配置 ##
 
-**1. 配置信息的继承**
+### 配置信息的继承 ###
 
 Spring允许继承bean的配置，被继承的bean称为父bean。继承这个父bean的bean称为子bean
 
@@ -525,7 +527,7 @@ Spring允许继承bean的配置，被继承的bean称为父bean。继承这个�
     </bean>
 	<bean id="address2" class="com.spring.relation.bean.Address" parent="address"/>
 
-**2. bean之间的依赖**
+### bean之间的依赖 ###
 
 有的时候创建一个bean的时候需要保证另外一个bean也被创建，这时我们称前面的bean对后面的bean有依赖。例如：要求创建address3对象的时候必须创建address4。	这里需要注意的是依赖关系不等于引用关系，address3即使依赖address4也可以不引用它。
 
@@ -535,7 +537,7 @@ Spring允许继承bean的配置，被继承的bean称为父bean。继承这个�
 
     <bean id="address4" class="com.spring.relation.bean.Address"/>
 
-**bean的作用域**
+## bean的作用域 ##
 
 	在Spring中，可以在<bean>元素的scope属性里设置bean的作用域，以决定这个bean是单实例的还是多实例的。
 	
@@ -566,7 +568,7 @@ Spring允许继承bean的配置，被继承的bean称为父bean。继承这个�
 
 当bean的作用域为单例时，Spring会在IOC容器对象创建时就创建bean的对象实例。而当bean的作用域为prototype时，IOC容器在获取bean的实例时创建bean的实例对象。
 
-**bean的生命周期**
+## bean的生命周期 ##
 
 1. Spring IOC容器可以管理bean的生命周期，Spring允许在bean生命周期内特定的时间点执行指定的任务
 2. Spring IOC容器对bean的生命周期进行管理的过程：
@@ -719,12 +721,11 @@ Spring允许继承bean的配置，被继承的bean称为父bean。继承这个�
 	6. bean可以使用了
 	7. 当容器关闭时调用bean的**销毁方法**
 
-
-**引用外部属性文件**
+## 引用外部属性文件 ##
 
 当bean的配置信息逐渐增多时，查找和修改一些bean的配置信息就变得愈加困难。这时可以将一部分信息提取到bean配置文件的外部，以properties格式的属性文件保存起来，同时在bean的配置文件中引用properties属性文件中的内容，从而实现一部分属性值在发生变化时仅修改properties属性文件即可。这种技术多用于连接数据库的基本信息的配置。
 
-**直接配置**
+### 直接配置 ###
 
 	  <!-- 直接配置c3p0连接池    ComboPooledDataSource-->
     <bean id="datasource" class="com.mchange.v2.c3p0.ComboPooledDataSource">
@@ -736,7 +737,7 @@ Spring允许继承bean的配置，被继承的bean称为父bean。继承这个�
         <property name="maxPoolSize" value="10"></property>
     </bean>
 
-**使用外部的属性文件**
+### 使用外部的属性文件 ###
 
 **1. 创建properties属性文件**
 
@@ -774,14 +775,14 @@ Spring允许继承bean的配置，被继承的bean称为父bean。继承这个�
 
 **注意:classpath指的是在当前类路径下进行查询，如果是多个模块下的配置是classpath***
 
-**自动装配**
+## 自动装配 ##
 
-**自动装配的概念**
+### 自动装配的概念 ###
 
 1. 手动装配：以value或ref的方式明确指定属性值都是手动装配。
 2. 自动装配：根据指定的装配规则，不需要明确指定，Spring自动将匹配的属性值注入bean中。
 
-**装配模式**
+### 装配模式 ###
 
 1. 根据类型自动装配：将类型匹配的bean作为属性注入到另一个bean中。若IOC容器中有多个与目标bean类型一致的bean，Spring将无法判定哪个bean最合适该属性，所以不能执行自动装配
 2. 根据名称自动装配：必须将目标bean的名称和属性名设置的完全相同
@@ -816,12 +817,29 @@ Spring允许继承bean的配置，被继承的bean称为父bean。继承这个�
 	        <property name="name" value="Tom"></property>
 	    </bean>
 
-**选用建议**
+### 选用建议 ###
 
 相对于使用注解的方式实现的自动装配，在XML文档中进行的自动装配略显笨拙，在项目中更多的使用注解的方式实现。
 
+## 通过注解配置bean ##
 
-**扫描组件**
+### 概述 ###
+
+相对于XML方式而言，通过注解的方式配置bean更加简洁和优雅，而且和MVC组件化开发的理念十分契合，是开发中常用的使用方式。
+
+### 使用注解标识组件 ###
+
+1. 普通组件：@Component标识一个受Spring IOC容器管理的组件
+2. 持久化层组件：@Repository标识一个受Spring IOC容器管理的持久化层组件
+3. 业务逻辑层组件：@Service标识一个受Spring IOC容器管理的业务逻辑层组件
+4. 表述层控制器组件：@Controller标识一个受Spring IOC容器管理的表述层控制器组件
+5. 组件命名规则
+	1. 默认情况：使用组件的简单类名首字母小写后得到的字符串作为bean的id
+	2. 使用组件注解的value属性指定bean的id
+	注意：事实上Spring并没有能力识别一个组件到底是不是它所标记的类型，即使将@Respository注解用在一个表述层控制器组件上面也不会产生任何错误，所以@Respository、@Service、@Controller这几个注解仅仅是为了让开发人员自己明确当前的组件扮演的角色。
+
+
+### 扫描组件 ###
 
 组件被上述注解标识后还需要通过Spring进行扫描才能够侦测到。
 
@@ -912,7 +930,7 @@ Spring允许继承bean的配置，被继承的bean称为父bean。继承这个�
 				
 3. JAR包 必须在原有JAR包组合的基础上再导入一个：spring-aop-4.3.18.RELEASE.jar
 
-**组件装配**
+### 组件装配 ###
 
 1. Controller组件中往往需要用到Service组件的实例，Service组件中往往需要用到Repository组件的实例。Spring可以通过注解的方式帮我们实现属性的装配。
 2. 实现依据,在指定要扫描的包时，<context:component-scan> 元素会自动注册一个bean的后置处理器：AutowiredAnnotationBeanPostProcessor的实例。该后置处理器可以自动装配标记了**@Autowired**、@Resource或@Inject注解的属性。
@@ -1008,17 +1026,17 @@ Spring允许继承bean的配置，被继承的bean称为父bean。继承这个�
 		}
 
 
-# AOP #
+# AOP前奏 #
 
-**动态代理**
+## 动态代理 ##
 
-动态代理的原理
+### 动态代理的原理 ###
 
 代理设计模式的原理：使用一个代理将对象包装起来，然后用该代理对象取代原始对象。任何对原始对象的调用都要通过代理。代理对象决定是否以及何时将方法调用转到原始对象上。
 
-![](https://github.com/DragonChilde/MarkdownPhotos/blob/master/photos/5.png?raw=true)
+![](http://120.77.237.175:9080/photos/spring/02.png)
 
-**动态代理的方式**
+### 动态代理的方式 ###
 
 1. 基于接口实现动态代理：JDK动态代理
 2. 基于继承实现动态代理： Cglib、Javassist动态代理 
@@ -1363,7 +1381,7 @@ Spring允许继承bean的配置，被继承的bean称为父bean。继承这个�
 - **如果在ArithmeticCalculatorImpl类里定义了新方法,这时就不能使用基于接口的代理对象方法了，会报异常,只能通过基于继承的代理对象ArithmeticCalculatorImpl来实现**
 
 
-**AOP概述**
+# AOP概述 #
 
 1. AOP(Aspect-Oriented Programming，**面向切面编程**)：是一种新的方法论，是对传  统 OOP(Object-Oriented Programming，面向对象编程)的补充。
 2. AOP编程操作的主要对象是切面(aspect)，而**切面模块化横切关注点**。
@@ -1373,9 +1391,9 @@ Spring允许继承bean的配置，被继承的bean称为父bean。继承这个�
 	2. 业务模块更简洁，只包含核心业务代码
 	3. AOP图解
 
-![](https://github.com/DragonChilde/MarkdownPhotos/blob/master/photos/3.png?raw=true)
+![](http://120.77.237.175:9080/photos/spring/03.png)
 
-**AOP术语**
+## AOP术语 ##
 
 - 横切关注点:从每个方法中抽取出来的同一类非核心业务。
 - 切面(Aspect):封装横切关注点信息的类，每个关注点体现为一个通知方法。
@@ -1384,14 +1402,17 @@ Spring允许继承bean的配置，被继承的bean称为父bean。继承这个�
 - 代理(Proxy)：向目标对象应用通知之后创建的代理对象
 - 连接点(Joinpoint):横切关注点在程序代码中的具体体现，对应程序执行的某个特定位置。例如：类某个方法调用前、调用后、方法捕获到异常后等。在应用程序中可以使用横纵两个坐标来定位一个具体的连接点：
 
-![](https://github.com/DragonChilde/MarkdownPhotos/blob/master/photos/2.png)
+![](http://120.77.237.175:9080/photos/spring/04.png)
 
 - 切入点(pointcut)：定位连接点的方式。每个类的方法中都包含多个连接点，所以连接点是类中客观存在的事物。如果把连接点看作数据库中的记录，那么切入点就是查询条件——AOP可以通过切入点定位到特定的连接点。切点通过org.springframework.aop.Pointcut 接口进行描述，它使用类和方法作为连接点的查询条件。
-![](https://github.com/DragonChilde/MarkdownPhotos/blob/master/photos/4.jpg?raw=true)
 
-**AspectJ**:Java社区里最完整最流行的AOP框架.在Spring2.0以上版本中，可以使用基于AspectJ注解或基于XML配置的AOP
+![](http://120.77.237.175:9080/photos/spring/05.jpg)
 
-**在Spring中启用AspectJ注解支持**
+## AspectJ ##
+
+Java社区里最完整最流行的AOP框架.在Spring2.0以上版本中，可以使用基于AspectJ注解或基于XML配置的AOP
+
+### 在Spring中启用AspectJ注解支持 ###
 
 1. 导入JAR包
 
@@ -1411,7 +1432,7 @@ Spring允许继承bean的配置，被继承的bean称为父bean。继承这个�
 		<aop:aspectj-autoproxy />
 	当Spring IOC容器侦测到bean配置文件中的<aop:aspectj-autoproxy>元素时，会自动为与AspectJ切面匹配的bean创建代理
 
-**用AspectJ注解声明切面**
+### 用AspectJ注解声明切面 ###
 
 1. 要在Spring中声明AspectJ切面，只需要在IOC容器中将切面声明为bean实例
 2. 当在Spring IOC容器中初始化AspectJ切面之后，Spring IOC容器就会为那些与 AspectJ切面相匹配的bean创建代理
@@ -1426,11 +1447,11 @@ Spring允许继承bean的配置，被继承的bean称为父bean。继承这个�
 
 # AOP细节 #
 
-**切入点表达式**
+## 切入点表达式 ##
 
 通过表达式的方式定位一个或多个具体的连接点
 
-**语法细节**
+### 语法细节 ###
 
 1. 切入点表达式的语法格式
 
@@ -1462,7 +1483,7 @@ Spring允许继承bean的配置，被继承的bean称为父bean。继承这个�
 		表达式	!execution (* *.add(int,..)) 
 		含义		匹配不是任意类中第一个参数为int类型的add方法
 
-**切入点表达式应用到实际的切面类中**
+### 切入点表达式应用到实际的切面类中 ###
 
 		@Aspect      //表示当前类是一个切面类
 		public class LoggingAspect {
@@ -1475,16 +1496,20 @@ Spring允许继承bean的配置，被继承的bean称为父bean。继承这个�
 		    }
 		}
 
-**当前连接点细节**
+## 当前连接点细节 ##
+
+### 概述 ###
 
 切入点表达式通常都会是从宏观上定位一组方法，和具体某个通知的注解结合起来就能够确定对应的连接点。那么就一个具体的连接点而言，我们可能会关心这个连接点的一些具体信息，例如：当前连接点所在方法的方法名、当前传入的参数值等等。这些信息都封装在JoinPoint接口的实例对象中。
 
-**JoinPoint**
+### JoinPoint ###
 
 		 Object[] getArgs();	//获取实际参数数组
 		 Signature getSignature();		//封装签名信息的对象,可以进一步获取方法名
 
-**通知**
+## 通知 ##
+
+### 概述 ###
 
 1. 在具体的连接点上要执行的操作
 2. 一个切面可以包括一个或者多个通知
@@ -1521,7 +1546,7 @@ Spring允许继承bean的配置，被继承的bean称为父bean。继承这个�
 
 		
 	
-**前置通知**
+### 前置通知 ###
 
 1. 前置通知：在方法执行之前执行的通知
 2. 使用@Before注解
@@ -1545,7 +1570,7 @@ Spring允许继承bean的配置，被继承的bean称为父bean。继承这个�
 			*/
 	    }
 
-**后置通知**
+### 后置通知 ###
 
 1. 后置通知是在连接点完成之后执行的，即连接点返回结果或者抛出异常的时候
 2. 使用@After注解
@@ -1575,7 +1600,7 @@ Spring允许继承bean的配置，被继承的bean称为父bean。继承这个�
 			*/
 	    }
 
-**返回通知**
+### 返回通知 ###
 
 1. 无论连接点是正常返回还是抛出异常，后置通知都会执行。如果只想在连接点返回的时候记录日志，应使用返回通知代替后置通知
 2. 使用@AfterReturning注解,在返回通知中访问连接点的返回值
@@ -1604,7 +1629,7 @@ Spring允许继承bean的配置，被继承的bean称为父bean。继承这个�
 				**/
 		    }
 
-**异常通知**
+### 异常通知 ###
 
 1. 只在连接点抛出异常时才执行异常通知
 2. 将throwing属性添加到@AfterThrowing注解中，也可以访问连接点抛出的异常。Throwable是所有错误和异常类的顶级父类，所以在异常通知方法可以捕获到任何错误和异常。
@@ -1630,7 +1655,7 @@ Spring允许继承bean的配置，被继承的bean称为父bean。继承这个�
 			*/
 	    }
 			
-**环绕通知**
+### 环绕通知 ###
 
 1. 环绕通知是所有通知类型中功能最为强大的，能够全面地控制连接点，甚至可以控制是否执行连接点
 2. 对于环绕通知来说，连接点的参数类型必须是ProceedingJoinPoint。它是 JoinPoint的子接口，允许控制何时执行，是否执行连接点
@@ -1672,7 +1697,7 @@ Spring允许继承bean的配置，被继承的bean称为父bean。继承这个�
 			**/
 	    }
 
-**重用切入点定义**
+## 重用切入点定义 ##
 
 1. 在编写AspectJ切面时，可以直接在通知注解中书写切入点表达式。但同一个切点表达式可能会在多个通知中重复出现
 2. 在AspectJ切面中，可以通过@Pointcut注解将一个切入点声明成简单的方法。切入点的方法体通常是空的，因为将切入点定义与应用程序逻辑混在一起是不合理的
@@ -1695,7 +1720,7 @@ Spring允许继承bean的配置，被继承的bean称为父bean。继承这个�
 		原有的//@Before("execution(* com.spring.aop.poxy.*.*(..))")
 		@Before("LoggingAspect.declarePointCut()")
 
-**指定切面的优先级**
+## 指定切面的优先级 ##
 
 1. 在同一个连接点上应用不止一个切面时，除非明确指定，否则它们的优先级是不确定的
 2. 切面的优先级可以通过实现Ordered接口或利用@Order注解指定
@@ -1757,16 +1782,18 @@ Spring允许继承bean的配置，被继承的bean称为父bean。继承这个�
 
 # 以XML方式配置切面 #
 
+## 概述 ##
+
 除了使用AspectJ注解声明切面，Spring也支持在bean配置文件中声明切面。这种声明是通过aop名称空间中的XML元素完成的。
 
 正常情况下，基于注解的声明要优先于基于XML的声明。通过AspectJ注解，切面可以与AspectJ兼容，而基于XML的配置则是Spring专有的。由于AspectJ得到越来越多的 AOP框架支持，所以以注解风格编写的切面将会有更多重用的机会。
 
-**配置细节**
+## 配置细节 ##
 
 在bean配置文件中，所有的Spring AOP配置都必须定义在<aop:config>元素内部。对于每个切面而言，都要创建一个<aop:aspect>元素来为具体的切面实现引用后端bean实例。
 切面bean必须有一个标识符，供<aop:aspect>元素引用
 
-**声明切入点**
+## 声明切入点 ##
 
 1. 切入点使用<aop:pointcut>元素声明
 2. 切入点必须定义在<aop:aspect>元素下，或者直接定义在<aop:config>元素下
@@ -1774,7 +1801,7 @@ Spring允许继承bean的配置，被继承的bean称为父bean。继承这个�
 	2.  定义在<aop:config>元素下：对所有切面都有效
 3. 基于XML的AOP配置不允许在切入点表达式中用名称引用其他切入点
 
-**声明通知**
+## 声明通知 ##
 
 1.在aop名称空间中，每种通知类型都对应一个特定的XML元素
 
@@ -1820,13 +1847,17 @@ Spring允许继承bean的配置，被继承的bean称为父bean。继承这个�
 
 # JdbcTemplate #
 
+## 概述 ##
+
 为了使JDBC更加易于使用，Spring在JDBC API上定义了一个抽象层，以此建立一个JDBC存取框架。 
 
 作为Spring JDBC框架的核心，JDBC模板的设计目的是为不同类型的JDBC操作提供模板方法，通过这种方式，可以在尽可能保留灵活性的情况下，将数据库存取的工作量降到最低。 
 	
 可以将Spring的JdbcTemplate看作是一个小型的轻量级持久化层框架，和我们之前使用过的DBUtils风格非常接近。
 
-**导入JAR包**
+## 环境准备 ##
+
+### 导入JAR包 ###
 
 JdbcTemplate所需要的JAR包：
 
@@ -1834,7 +1865,7 @@ JdbcTemplate所需要的JAR包：
 - spring-orm-4.3.18.RELEASE.jar
 - spring-tx-4.3.18.RELEASE.jar
 
-**在Spring配置文件中配置相关的bean**
+### 在Spring配置文件中配置相关的bean ###
 
 	<?xml version="1.0" encoding="UTF-8"?>
 	<beans xmlns="http://www.springframework.org/schema/beans"
@@ -1859,7 +1890,7 @@ JdbcTemplate所需要的JAR包：
 	</beans>
 
 
-**持久化操作**
+## 持久化操作 ##
 
 1. 增删改	
 
@@ -1938,7 +1969,7 @@ JdbcTemplate所需要的JAR包：
 	        System.out.println(count);
 	    }
 
-**使用具名参数的JdbcTemplate**
+## 使用具名参数的JdbcTemplate ##
 
 1. 通过IOC容器创建NamedParameterJdbcTemplate对象
 
@@ -1988,7 +2019,7 @@ JdbcTemplate所需要的JAR包：
 			        npjt.update(sql,parameterSource);
 			    }
 
-**使用JdbcTemplate实现Dao**
+## 使用JdbcTemplate实现Dao ##
 
 通过IOC容器自动注入
 
@@ -2013,7 +2044,7 @@ JdbcTemplate所需要的JAR包：
 
 # 声明式事务管理 #
 
-**事务概述**
+## 事务概述 ##
 
 1. 在JavaEE企业级开发的应用领域，为了保证数据的**完整性** 和 **一致性** ，必须引入数据库事务的概念，所以事务管理是企业级应用程序开发中必不可少的技术
 2. 事务就是一组由于逻辑上紧密关联而合并成一个整体(工作单元)的多个数据库操作，这些操作 **要么都执行，要么都不执行**
@@ -2023,9 +2054,9 @@ JdbcTemplate所需要的JAR包：
 	3. **隔离性**(isolation)：在应用程序实际运行过程中，事务往往是并发执行的，所以很有可能有许多事务同时处理相同的数据，因此每个事务都应该与其他事务隔离开来，防止数据损坏。隔离性原则要求多个事务在**并发执行过程中不会互相干扰**
 	4. **持久性**(durability)：持久性原则要求事务执行完成后，对数据的修改**永久的保存**下来，不会因各种系统错误或其他意外情况而受到影响。通常情况下，事务对数据的修改应该被写入到持久化存储器中
 
-**Spring事务管理**
+## Spring事务管理 ##
 
-**编程式事务管理**
+### 编程式事务管理 ###
 
 1. 使用原生的JDBC API进行事务管理
 	1. 获取数据库连接Connection对象
@@ -2038,7 +2069,7 @@ JdbcTemplate所需要的JAR包：
 
 使用原生的**JDBC API**实现事务管理是所有事务管理方式的基石，同时也是最典型	的编程式事务管理。编程式事务管理需要将事务管理代码**嵌入到业务方法中** 来控制事务	的提交和回滚。在使用编程的方式管理事务时，必须在每个事务操作中包含额外的事务管理代码。相对于**核心业务**而言，事务管理的代码显然属于**非核心业务** ，如果多个模块都使用同样模式的代码进行事务管理，显然会造成较大程度的**代码冗余**。
 
-**声明式事务管理**
+### 声明式事务管理 ###
 
 大多数情况下声明式事务比编程式事务管理更好：它将事务管理代码从业务方法中分离出来，以声明的方式来实现事务管理。
 
@@ -2048,7 +2079,7 @@ Spring在不同的事务管理API之上定义了一个抽象层，通过配置�
 
 Spring既支持编程式事务管理，也支持声明式的事务管理。
 
-**Spring提供的事务管理器**
+### Spring提供的事务管理器 ###
 
 Spring从不同的事务管理API中抽象出了一整套事务管理机制，让事务管理代码从特定的事务技术中独立出来。开发人员通过配置的方式进行事务管理，而不必了解其底层是如何实现的。
 
@@ -2056,13 +2087,13 @@ Spring的核心事务管理抽象是PlatformTransactionManager。它为事务管
 
 事务管理器可以以普通的bean的形式声明在Spring IOC容器中。
 
-**事务管理器的主要实现**
+### 事务管理器的主要实现 ###
 
 1. DataSourceTransactionManager：在应用程序中只需要处理一个数据源，而且通过JDBC存取。
 2. JtaTransactionManager：在JavaEE应用服务器上用JTA(Java Transaction API)进行事务管理
 3. HibernateTransactionManager：用Hibernate框架存取数据库
 
-spring-tx.xml
+**spring-tx.xml**
 
 		<?xml version="1.0" encoding="UTF-8"?>
 		<beans xmlns="http://www.springframework.org/schema/beans"
@@ -2106,7 +2137,7 @@ spring-tx.xml
 		    <tx:annotation-driven transaction-manager="dataSourceTransactionManager"/>
 		</beans>
 
-Dao
+**Dao**
 
 		public interface BookShopDao {
 		
@@ -2165,7 +2196,7 @@ Dao
 		    }
 		}
 
-Service
+**Service**
 
 		public interface BookShopService {
 		    public void buyBook(String username,String isbn);
@@ -2188,7 +2219,7 @@ Service
 		    }
 		}
 
-Main
+**Main**
 
 		//当加了@Transactional注解后，通过@Service查找会变成代理模式进行AOP
 		//反之打印只是一个bookShopServiceImpl bean类型
@@ -2200,7 +2231,9 @@ Main
 	        bean.buyBook("Tom","1001");
 	    }
 
-**事务的传播行为**
+## 事务的传播行为 ##
+
+### 简介 ###
 
 当事务方法被另一个事务方法调用时，必须指定事务应该如何传播。例如：方法可能继续在现有事务中运行，也可能开启一个新事务，并在自己的事务中运行。
 
@@ -2216,7 +2249,7 @@ Main
 
 事务传播属性可以在@Transactional注解的propagation属性中定义。
 
-测试
+### 测试 ###
 
 	public interface Cashier {
 
@@ -2246,13 +2279,13 @@ Main
 
 	当bookService的buyBook()方法被另一个事务方法purchase()调用时，它默认会在现有的事务内运行。这个默认的传播行为就是REQUIRED。因此在purchase()方法的开始和终止边界内只有一个事务。这个事务只在purchase()方法结束的时候被提交，结果用户一本书都买不了
 
-	![](https://github.com/DragonChilde/MarkdownPhotos/blob/master/photos/6.png)
+	![](http://120.77.237.175:9080/photos/spring/06.png)
 
 2. **REQUIRES_NEW传播行为(在事务1执行过程中,如果有事务2,事务1会先挂起，等事务2执行完再执行事务1,之后的事务3,4,5...也一样，事务1挂起,执行完再执行事务1)**
 
 	表示该方法必须启动一个新事务，并在自己的事务内运行。如果有事务在运行，就应该先挂起它
 
-![](https://github.com/DragonChilde/MarkdownPhotos/blob/master/photos/7.png)
+![](http://120.77.237.175:9080/photos/spring/07.png)
 
 		@Service
 		public class BookShopServiceImpl implements BookShopService{
@@ -2276,9 +2309,9 @@ Main
 		    }
 		}
 
-**事务的隔离级别isolation**
+## 事务的隔离级别isolation ##
 
-**数据库事务并发问题**
+### 数据库事务并发问题 ###
 
 假设现在有两个事务：Transaction01和Transaction02并发执行
 
@@ -2299,7 +2332,7 @@ Main
 	3. Transaction01读取了STUDENT表时，多出了一些行
 
 
-**隔离级别**
+### 隔离级别 ###
 
 数据库系统必须具有隔离并发运行各个事务的能力，使它们不会相互影响，避免各种并发问题。**一个事务与其他事务隔离的程度称为隔离级别**。SQL标准中规定了多种事务隔离级别，不同隔离级别对应不同的干扰程度，隔离级别越高，数据一致性就越好，但并发性越弱
 
@@ -2317,20 +2350,20 @@ Main
 	确保Transaction01可以多次从一个表中读取到相同的行，在Transaction01执行期间，禁止其它事务对这个表进行添加、更新、删除操作。可以避免任何并发问题，但性能十分低下
 5. 各个隔离级别解决并发问题的能力见下表
 
-							脏读		不可重复读		幻读
-		READ UNCOMMITTED			有		有			有
-		READ COMMITTED				无		有			有
-		REPEATABLE READ			无		无			有
-		SERIALIZABLE				无		无			无
+									脏读			不可重复读			幻读
+		READ UNCOMMITTED			有				有				有
+		READ COMMITTED				无				有				有
+		REPEATABLE READ				无				无				有
+		SERIALIZABLE				无				无				无
 6. 各种数据库产品对事务隔离级别的支持程度
 
-							Oracle		MySQL
-		READ UNCOMMITTED			×		√
-		READ COMMITTED				√(默认)		√
-		REPEATABLE READ			×		√(默认)
-		SERIALIZABLE				√		√
+									Oracle				MySQL
+		READ UNCOMMITTED				×				√
+		READ COMMITTED					√(默认)			√
+		REPEATABLE READ					×				√(默认)
+		SERIALIZABLE					√				√
 
-**在Spring中指定事务隔离级别**
+### 在Spring中指定事务隔离级别 ###
 
 1.**注解**
 
@@ -2341,13 +2374,13 @@ Main
 		.....
     }
 
-**触发事务回滚的异常**
+## 触发事务回滚的异常 ##
 
-**默认情况**
+### 默认情况 ###
 
 捕获到RuntimeException或Error时回滚，而捕获到编译时异常不回滚
 
-**设置途经**
+### 设置途经 ###
 
 1. 注解@Transactional注解
 	1. rollbackFor属性(class类型)：指定遇到时必须进行回滚的异常类型，可以为多个
@@ -2358,7 +2391,9 @@ Main
 				....
 		    }
 
-**事务的超时和只读属性**
+## 事务的超时和只读属性 ##
+
+### 简介 ###
 
 由于事务可以在行和表上获得锁，因此长事务会占用资源，并对整体性能产生影响。
 
@@ -2366,6 +2401,8 @@ Main
 
 - 超时事务属性：事务在强制回滚之前可以保持多久。这样可以防止长期运行的事务占用资源。
 - 只读事务属性: 表示这个事务只读取数据但不更新数据, 这样可以帮助数据库引擎优化事务。
+
+### 设置 ###
 
 事务的只读设置:
 
@@ -2377,16 +2414,16 @@ Main
 
 事务的超时设置:  设置事务在强制回滚之前可以占用的时间.
 
-	timeout:
+	timeout: 30
 
 1. 注解
 
-		@Transactional(propagation = Propagation.REQUIRES_NEW,isolation = Isolation.READ_COMMITTED,noRollbackFor = {UserAccountException.class},readOnly = false,timeout = 3)
+		@Transactional(propagation = Propagation.REQUIRES_NEW,isolation = Isolation.READ_COMMITTED,noRollbackFor = {UserAccountException.class},readOnly = false,timeout = 30)
 	    public void buyBook(String username, String isbn) {
 			...
 	    }
 
-**Spring事务的XML方式**
+## Spring事务的XML方式 ##
 
 	<?xml version="1.0" encoding="UTF-8"?>
 	<beans xmlns="http://www.springframework.org/schema/beans"
@@ -2429,7 +2466,7 @@ Main
 	        <!-- 配置事务属性 -->
 	        <tx:attributes>
 	            <!-- 具体的方法使用的事务属性 -->
-	            <tx:method name="buyBook" isolation="READ_COMMITTED" propagation="REQUIRES_NEW" read-only="false" rollback-for="UserAccountException"/>
+	            <tx:method name="buyBook" isolation="READ_COMMITTED" propagation="REQUIRES_NEW" read-only="false" rollback-for="UserAccountException" timeout="30"/>
 	            <tx:method name="purchase"/>
 	
 	            <!-- 约定方法的名字 -->
